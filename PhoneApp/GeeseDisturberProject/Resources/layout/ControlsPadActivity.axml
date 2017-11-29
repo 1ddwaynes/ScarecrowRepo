@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <WebView
+        android:layout_width="match_parent"
+        android:layout_height="290dp"
+        android:id="@+id/webView1" />
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:id="@+id/space1" />
+    <Button
+        android:text="Up"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="150dp"
+        android:layout_height="70dp"
+        android:id="@+id/btnUp" />
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:id="@+id/space4" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="70dp">
+        <Button
+            android:text="Left"
+            android:layout_width="90dp"
+            android:layout_height="match_parent"
+            android:id="@+id/btnLeft" />
+        <Space
+            android:layout_width="205dp"
+            android:layout_height="match_parent"
+            android:id="@+id/space4" />
+        <Button
+            android:text="Right"
+            android:layout_width="90dp"
+            android:layout_height="match_parent"
+            android:id="@+id/btnRight" />
+    </LinearLayout>
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:id="@+id/space4" />
+    <Button
+        android:text="Down"
+        android:layout_width="150dp"
+        android:layout_height="70dp"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/btnDown" />
+</LinearLayout>

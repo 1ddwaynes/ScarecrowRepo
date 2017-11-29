@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Paths>
+  <Jars></Jars>
+  <ResolvedResourceDirectories>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\AWSSDK.Core\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\PCLCrypto\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\PCLStorage\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCL.raw\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.batteries_green\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.batteries_v2\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.core\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.lib.e_sqlite3\library_project_imports\res</ResolvedResourceDirectory>
+    <ResolvedResourceDirectory>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.provider.e_sqlite3\library_project_imports\res</ResolvedResourceDirectory>
+  </ResolvedResourceDirectories>
+  <ResolvedAssetDirectories>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\AWSSDK.Core\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\PCLCrypto\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\PCLStorage\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCL.raw\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCLRaw.batteries_green\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCLRaw.batteries_v2\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCLRaw.core\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCLRaw.lib.e_sqlite3\library_project_imports\assets</ResolvedAssetDirectory>
+    <ResolvedAssetDirectory>obj\Release\__library_projects__\SQLitePCLRaw.provider.e_sqlite3\library_project_imports\assets</ResolvedAssetDirectory>
+  </ResolvedAssetDirectories>
+  <ResolvedEnvironmentFiles />
+  <ResolvedResourceDirectoryStamps>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\AWSSDK.Core.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\PCLCrypto.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\PCLStorage.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCL.raw.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.batteries_green.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.batteries_v2.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.core.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.lib.e_sqlite3.stamp</ResolvedResourceDirectoryStamp>
+    <ResolvedResourceDirectoryStamp>E:\Users\MiniHDNext\Documents\CompleteProject_GDP\PhoneApp\GeeseDisturberProject\obj\Release\__library_projects__\SQLitePCLRaw.provider.e_sqlite3.stamp</ResolvedResourceDirectoryStamp>
+  </ResolvedResourceDirectoryStamps>
+</Paths>
