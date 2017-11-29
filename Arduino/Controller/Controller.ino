@@ -5,20 +5,20 @@
 static const uint32_t SERIAL_PORT_BAUD = 115200;
 static const int RC_NUM_CHANNELS = 4;
 
-static const int RC_CH1 = 0;
-static const int RC_CH2 = 1;
+static const int RC_xAxis = 0;
+static const int RC_yAxis = 1;
 
-static const int RC_CH1_INPUT = A1; //A12
-static const int RC_CH2_INPUT = A2; //A13
+static const int RC_xAxis_INPUT = A12; //A12
+static const int RC_yAxis_INPUT = A13; //A13
 
 unsigned long startTime;
 unsigned long interval = 30000;
 
-int GLOBAL_DUMP_VAR = 0;
 
+static const int enA = 9, enB = 10;
 static const int triGPS_RX_Pin = 34, echo_TX_Pin = 35;
 static const uint32_t GPS_BAUD = 9600;
-static const int LED_G_Pin = 5, HORN_PIN = 42, ONOFF_PIN = 43, MOTOR_PIN = 4;
+static const int LED_G_Pin = 5, HORN_PIN = 42, ONOFF_PIN = 43; //motor_PIN = 4;
 static const int opSens = A3;
 
 int signalAInput1;                             // signal input 1 for encoderA
@@ -41,32 +41,18 @@ int robotDirection = 2;
 int xcoordinate = 2;
 int ycoordinate = 1;
 
-// ultrasonic pins
-const int Trig_pin = 5;  // pin for triggering pulse    INPUT
-const int Echo_pin = 6;   // pin for recieving echo      OUPUT
-long duration;            // how long it takes for the sound to rebound
-
-
-						  // motor pins
-const int Motor1Pin = 9;  // Left side
-const int Motor2Pin = 10; // right side
+						  // //motor pins
+//const int motor1Pin = 9;  // Left side
+//const int motor2Pin = 10; // right side
 
 						  // the array that it tracks with
 						  // this can be an array of any size
 						  // just make sure that the robot has a free space to move to from its initial position.
-int arraything[6][6] =
+int arraything[2][2] =
 {
-	{ 1,1,1,1,1,1 }
+	{ 1,1 }
 	,
-	{ 1,1,0,1,0,1 }
-	,
-	{ 1,1,0,1,0,1 }
-	,
-	{ 1,1,0,1,0,1 }
-	,
-	{ 1,1,0,1,1,1 }
-	,
-	{ 1,1,1,0,1,1 }
+	{ 1,1 }
 };
 
 uint16_t rc_values[RC_NUM_CHANNELS];
@@ -77,7 +63,7 @@ TinyGPSPlus gps;
 
 // Pins for AltSoftSerial
 // TXPin = 46(7) RXPin = 48(8) UsuablePins = 44, 45
-AltSoftSerial  altSerial;
+AltSoftSerial  altSerial; 
 
 unsigned long last = 0UL;
 
@@ -87,8 +73,8 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(triGPS_RX_Pin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echo_TX_Pin, INPUT); // Sets the echoPin as an Input
-  pinMode(RC_CH1_INPUT, INPUT);
-  pinMode(RC_CH2_INPUT, INPUT);
+  pinMode(RC_xAxis_INPUT, INPUT);
+  pinMode(RC_yAxis_INPUT, INPUT);
   pinMode(opSens, INPUT);
 
   // Rotary encoder
@@ -97,8 +83,8 @@ void setup() {
 
   pinMode(LED_G_Pin, OUTPUT);
 
-  enableInterrupt(RC_CH1_INPUT, calc_ch1, CHANGE);
-  enableInterrupt(RC_CH2_INPUT, calc_ch2, CHANGE);
+  enableInterrupt(RC_xAxis_INPUT, calc_ch1, CHANGE);
+  enableInterrupt(RC_yAxis_INPUT, calc_ch2, CHANGE);
   pinMode(HORN_PIN,INPUT_PULLUP);
   pinMode(ONOFF_PIN,INPUT_PULLUP);
   pinMode(HORN_PIN,OUTPUT);
@@ -132,29 +118,29 @@ void loop() {
     Serial.print(F("Spd"));
     printFloat(gps.speed.mph(), gps.speed.isValid(), 6, 2);
 
-	
-
     Serial.print(F("Dst"));
-    printInt(getFrontDistance(),true, 2);
+    printInt(getFrontDistance(),true, 6);
     //float distance = getFrontDistance();
     //horn_controller(distance);
+
+	auto_horn_controller();
     
     rc_read_values();
 
-    Serial.print("CH1"); Serial.print(rc_values[RC_CH1]); Serial.println("\t");
-    Serial.print("CH3"); Serial.print(rc_values[RC_CH2]); Serial.println("\t");
+    Serial.print(F("yAX")); Serial.print(rc_values[RC_xAxis]); Serial.println("\t");
+    Serial.print(F("xAX")); Serial.print(rc_values[RC_yAxis]); Serial.println("\t");
 
-    int RC1 = rc_values[RC_CH1];
-    int RC2 = rc_values[RC_CH2];
+    int RC1 = rc_values[RC_xAxis];
+    int RC2 = rc_values[RC_yAxis];
 
-    //motorControl( RC1, RC2);
+    rc_control(RC1, RC2);
     
 // no less than 50 ms (as per JSN Ultrasonic sensor specification)
-smartDelay(600);
+smartDelay(60);
 }
 
-void calc_ch1() { calc_input(RC_CH1, RC_CH1_INPUT); }
-void calc_ch2() { calc_input(RC_CH2, RC_CH2_INPUT); }
+void calc_ch1() { calc_input(RC_xAxis, RC_xAxis_INPUT); }
+void calc_ch2() { calc_input(RC_yAxis, RC_yAxis_INPUT); }
 
 void debug()
 {
@@ -178,17 +164,20 @@ void debug()
     }
 }
 
-void horn_controller(float distance){
-  unsigned long start = millis();
-  
-  if (start - startTime >= interval){
-     digitalWrite(HORN_PIN, HIGH);
-     smartDelay(100);
-     digitalWrite(HORN_PIN, LOW);
-     startTime = millis ();
-  }
-  
-  else if ( distance < 60 && distance > 0) {
+static void auto_horn_controller()
+{
+	unsigned long start = millis();
+
+	if (start - startTime >= interval) {
+		digitalWrite(HORN_PIN, HIGH);
+		smartDelay(100);
+		digitalWrite(HORN_PIN, LOW);
+		startTime = millis();
+	}
+}
+void horn_controller(float distance)
+{
+  if ( distance < 60 && distance > 0) {
      digitalWrite(HORN_PIN, HIGH);
      smartDelay(500);
      digitalWrite(HORN_PIN, LOW);
@@ -266,7 +255,7 @@ static void printStr(const char *str, int len)
 		smartDelay(0);
 	}
 
-static float getFrontDistance()
+static int getFrontDistance()
 {
 	float duration, distanceCm;
 
@@ -285,63 +274,117 @@ static float getFrontDistance()
 	duration = pulseIn(echo_TX_Pin, HIGH);
 
 	// Calculating the distance (cm)
-	distanceCm = duration * 0.034 / 2;
+	distanceCm = duration / 29 / 2;
 
-	//Checks if see sensor value is within sensor range
-  //  if (distance >= 600 || distance <= 18)
-  //  {
-  //     smartDelay(40);
-  //     Serial.println('*');
-  //  }
-  //  else 
-  //  {
-  //    if(distance <= 60) 
-  //    {
-  //     horn_controller(distance);
-  //    }
-  //  }
-
-	if (distanceCm < 600 || distanceCm > 18)
+	
+	if (distanceCm <= 600 && distanceCm >= 19)
 	{
-		if (distanceCm <= 60)
+		if (distanceCm <= 60 && distanceCm >= 19)
 		{
 			horn_controller(distanceCm);
 		}
-		else
-			Serial.println("***");
+		return distanceCm;
 	}
-	return distanceCm;
 }
 
-static void control() 
+static void rc_control(int xAxis, int yAxis)
 {
-	while (1 == 1) {
-		if (isFrontOpen() == true) 
+	int linearActuator = map(yAxis, 1828, 1160, 0, 255); // Map the potentiometer value from 0 to 255
+	analogWrite(enA, linearActuator); // Send PWM signal to L298N Enable pin
+	Serial.println("1");
+	Serial.println(linearActuator);
+	int DCmotor = map(xAxis, 1932, 1088, 0, 255); // Map the potentiometer value from 0 to 255
+	Serial.println("2");
+	Serial.println(DCmotor);
+	analogWrite(enB, DCmotor); // Send PWM signal to L298N Enable pin
+}
+
+static void auto_control(double rightDetect, double leftDetect)
+{
+	if (rightDetect > 200 && leftDetect > 200)
+	{
+		//move  forward
+	}
+
+	//stop foward
+	//cant use back and foward motors at the same time
+
+	else if (rightDetect <= 180 || leftDetect <= 180 )
+	{ 
+		if (rightDetect > leftDetect)
 		{
-			moveForward();
-			delay(2000);
+			//turn to right
+			//limit the amount of the right turning
 		}
+
 		else
-			if (isRightOpen() == true)
+		{
+			//move to left
+		}
+	}
+
+	else if (rightDetect == leftDetect)
+	{
+		//move back some distance
+		//stop back
+		//turn left
+		//move forward
+	}
+}
+
+static int alighmToGeoCompass()
+{
+	//if GPS direction is not same GPS location direction
+	{
+		//if currently North 
+		{
+			//if des cord > 0 && cur cord > 0
 			{
-				turnRight();
-				delay(2000);
+				//des cord - curr cord
 			}
-			else
-				if (isLeftOpen() == true) 
-				{
-					turnLeft();
-					delay(2000);
-				}
-				else {
-					turnAround();
-					delay(2000);
-				}
+			//else if des cord < 0 && cur cord < 0
+			{
+				//print not coded for southern hemisphere
+			}
+
+			//if lat cord != 
+			//stop forward
+			//turn right
+		}
+		//if North
+	}
+}
+
+
+//
+// code provided by http://www.instructables.com/id/Autonomous-Autonavigation-Robot-Arduino/
+//
+static void control()
+{
+	if (isFrontOpen() == true)
+	{
+		moveForward();
+		smartDelay(2000);
+	}
+	else if (isRightOpen() == true)
+		{
+			turnRight();
+			smartDelay(2000);
+		}
+	else if (isLeftOpen() == true)
+	{
+		turnLeft();
+		smartDelay(2000);
+	}
+	else
+	{
+		turnAround();
+		smartDelay(2000);
 	}
 }
 
 // Checks if there is something right in front of it using Grids
-boolean isFrontOpen() {
+static boolean isFrontOpen() {
 	int nextNumber = getFrontNumber();
 	if (nextNumber == 0) {
 		return true;
@@ -352,7 +395,7 @@ boolean isFrontOpen() {
 }
 
 // Checks if there is something to the Right of it using Grids
-boolean isRightOpen() {
+static boolean isRightOpen() {
 	int nextNumber = getRightNumber();
 	if (nextNumber == 0) {
 		return true;
@@ -363,7 +406,7 @@ boolean isRightOpen() {
 }
 
 // Checks if there is something to the Left of it using Grids
-boolean isLeftOpen() {
+static boolean isLeftOpen() {
 	int nextNumber = getLeftNumber();
 	if (nextNumber == 0) {
 		return true;
@@ -374,9 +417,9 @@ boolean isLeftOpen() {
 }
 
 // Moves straight forward.
-void moveForward() {
-	//motor1.write(180);
-	//motor2.write(0);
+static void moveForward() {
+	////motor1.write(180);
+	////motor2.write(0);
 
 	Serial.println("Forward");
 	if (robotDirection == 0)
@@ -387,7 +430,7 @@ void moveForward() {
 		ycoordinate = ycoordinate + 1;
 	if (robotDirection == 3)
 		xcoordinate = xcoordinate - 1;
-	delay(100);
+	smartDelay(100);
 	/*Serial.print("  xcoordinate " );
 	Serial.print(xcoordinate);
 	delay (500);
@@ -401,17 +444,17 @@ void moveForward() {
 	delay(1000);
 
 	*/
-	delay(800);
+	smartDelay(800);
 }
 
 // Turns 90 degrees to the Right
-void turnRight() {
-	//motor1.write(60);
-	//motor2.write(60);
-	delay(178);
-	//motor2.write(95);
-	delay(65);
-	//motor1.write(90);
+static void turnRight() {
+	////motor1.write(60);
+	////motor2.write(60);
+	smartDelay(178);
+	////motor2.write(95);
+	smartDelay(65);
+	////motor1.write(90);
 	Serial.println("Right");
 	if (robotDirection == 0)
 		robotDirection = 1;
@@ -421,29 +464,29 @@ void turnRight() {
 		robotDirection = 3;
 	else if (robotDirection == 3)
 		robotDirection = 0;
-	delay(500);
+	smartDelay(500);
 	Serial.print("  xcoordinate ");
 	Serial.print(xcoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print(" ycoordinate ");
 	Serial.print(ycoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print("  robot direction: ");
 	Serial.print(robotDirection);
-	delay(500);
+	smartDelay(500);
 	Serial.println();
 
-	delay(1000);
+	smartDelay(1000);
 }
 
 // Turns 90 degrees to the Left
-void turnLeft() {
+static void turnLeft() {
 	//motor1.write(120);
 	//motor2.write(120);
-	delay(325);
+	smartDelay(325);
 	//motor2.write(95);
-	delay(65);
-	//motor.write(90);
+	smartDelay(65);
+	//motor1.write(90);
 	Serial.println("Left");
 	if (robotDirection == 0)
 		robotDirection = 3;
@@ -453,22 +496,22 @@ void turnLeft() {
 		robotDirection = 1;
 	else if (robotDirection == 3)
 		robotDirection = 2;
-	delay(500);
+	smartDelay(500);
 	Serial.print("  xcoordinate ");
 	Serial.print(xcoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print(" ycoordinate ");
 	Serial.print(ycoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print("  robot direction: ");
 	Serial.print(robotDirection);
-	delay(500);
+	smartDelay(500);
 	Serial.println();
-	delay(1000);
+	smartDelay(1000);
 }
 
 // Turns 180 degrees
-void turnAround() {
+static void turnAround() {
 	//  delay(1000);
 	Serial.println("Around");
 	if (robotDirection == 0)
@@ -479,23 +522,21 @@ void turnAround() {
 		robotDirection = 0;
 	else if (robotDirection == 3)
 		robotDirection = 1;
-	delay(500);
+	smartDelay(500);
 	Serial.print("  xcoordinate ");
 	Serial.print(xcoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print(" ycoordinate ");
 	Serial.print(ycoordinate);
-	delay(500);
+	smartDelay(500);
 	Serial.print("  robot direction: ");
 	Serial.print(robotDirection);
-	delay(500);
-	Serial.println();
 
-	delay(1000);
+	smartDelay(1000);
 }
 
 // Gets the number on the Grid of the space right in front of it.
-int getFrontNumber() {
+static int getFrontNumber() {
 	if (robotDirection == 0) {
 		return arraything[ycoordinate - 1][xcoordinate];
 	}
@@ -511,7 +552,7 @@ int getFrontNumber() {
 }
 
 // Gets the number on the Grid of the space to the Right of it.
-int getRightNumber() {
+static int getRightNumber() {
 	if (robotDirection == 0) {
 		return arraything[ycoordinate][xcoordinate + 1];
 
@@ -529,7 +570,7 @@ int getRightNumber() {
 }
 
 // Gets the number on the Grid of the Space to the Left of it.
-int getLeftNumber() {
+static int getLeftNumber() {
 	if (robotDirection == 0) {
 		return arraything[ycoordinate][xcoordinate - 1];
 	}
@@ -543,5 +584,3 @@ int getLeftNumber() {
 		return arraything[ycoordinate + 1][xcoordinate];
 	}
 }
-
-
