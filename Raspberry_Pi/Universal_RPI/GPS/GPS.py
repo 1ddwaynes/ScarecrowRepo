@@ -34,18 +34,19 @@ class InitGPS:
     # could possible be expanded on
     def check_instance(self, data):
         if data:
-            if "Sat" in data:
+            if 'Sat' in data:
                 data = data.replace("Sat", "")
-                self.SatN = float(data)
+                print(data)
+                #self.SatN = float(data)
                 # there's a problem with how Sat data is being sent from Arduino
                 # should be unnecessary in the future
                 # data = data[:-6]
                 # self.SatN = float(data)
-            elif "Lat" in data:
+            elif 'Lat' in data:
                 # print ("lat")
                 data = data.replace("Lat", "")
                 self.c_lat_value = float(data)
-            elif "Lon" in data:
+            elif 'Lon' in data:
                 # print ("Lon")
                 data = data.replace("Lon", "")
                 self.c_lon_value = float(data)

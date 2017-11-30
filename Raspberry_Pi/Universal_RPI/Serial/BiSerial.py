@@ -1,7 +1,7 @@
 # requires the pyserial module to be install inorder to function
 import serial
 import time
-
+import codecs
 
 class InitSerial():
     def __init__(self, *args):
@@ -27,7 +27,7 @@ class InitSerial():
 
             for try_port in self.port_names:
                 try:
-                    self.ser = serial.Serial(try_port, 9600, timeout=0.05)
+                    self.ser = serial.Serial(try_port, 115200, timeout=0.05)
                     # print("Connecting to Arduino using open port {}.").format(try_port)
                 except Exception as e:
                     print ("Connection failed. Retrying")
@@ -56,6 +56,7 @@ class InitSerial():
                     except Exception as e:
                         print("Readline Error")
                         print(e)
+
                     return data
 
     # closes port to prevent port locking
