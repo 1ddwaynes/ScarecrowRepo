@@ -1,0 +1,61 @@
+#include <TinyGPS++.h>
+#include <AltSoftSerial.h>
+#include <EnableInterrupt.h>
+#include <waypointClass.h>
+
+static const uint32_t SERIAL_PORT_BAUD = 115200;
+static const int RC_NUM_CHANNELS = 2;
+
+static const int RC_xAxis = 0;
+static const int RC_yAxis = 1;
+
+static const int RC_xAxis_INPUT = A12; //A12
+static const int RC_yAxis_INPUT = A13; //A13
+
+uint16_t rc_values[RC_NUM_CHANNELS];
+uint32_t rc_start[RC_NUM_CHANNELS];
+volatile uint16_t rc_shared[RC_NUM_CHANNELS];
+
+void setup() {
+
+	pinMode(RC_xAxis_INPUT, INPUT);
+	pinMode(RC_yAxis_INPUT, INPUT);
+
+	enableInterrupt(RC_xAxis_INPUT, calc_ch1, CHANGE);
+	enableInterrupt(RC_yAxis_INPUT, calc_ch2, CHANGE);
+
+	Serial.begin(SERIAL_PORT_BAUD);
+}
+
+void loop() {
+
+	rc_read_values();
+
+	Serial.print(F("yAX")); Serial.print(rc_values[RC_xAxis]); Serial.println("\t");
+	Serial.print(F("xAX")); Serial.print(rc_values[RC_yAxis]); Serial.println("\t");
+
+	int RC1 = rc_values[RC_xAxis];
+	int RC2 = rc_values[RC_yAxis];
+
+	// no less than 50 ms (as per JSN Ultrasonic sensor specification)
+	delay(600);
+}
+
+void calc_ch1() { calc_input(RC_xAxis, RC_xAxis_INPUT); }
+void calc_ch2() { calc_input(RC_yAxis, RC_yAxis_INPUT); }
+
+void rc_read_values() {
+	noInterrupts();
+	memcpy(rc_values, (const void *)rc_shared, sizeof(rc_shared));
+	interrupts();
+}
+
+void calc_input(uint8_t channel, uint8_t input_pin) {
+	if (digitalRead(input_pin) == HIGH) {
+		rc_start[channel] = micros();
+	}
+	else {
+		uint16_t rc_compare = (uint16_t)(micros() - rc_start[channel]);
+		rc_shared[channel] = rc_compare;
+	}
+}
