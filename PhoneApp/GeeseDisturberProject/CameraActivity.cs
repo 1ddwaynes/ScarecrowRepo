@@ -14,10 +14,12 @@ using GeeseDisturberProject.Resources;
 using GeeseDisturberProject.Resources.DataHelper;
 using GeeseDisturberProject.Model;
 using Android.Util;
+using Android.Content.PM;
 
 namespace GeeseDisturberProject.Camera
 {
-    [Activity(Label = "Camera Menu")]
+    [Activity(Label = "Camera Menu", ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
+    ScreenOrientation = ScreenOrientation.Landscape)]
     public class CameraActivity : Activity
     {
         WebView web_view;
@@ -55,7 +57,7 @@ namespace GeeseDisturberProject.Camera
             web_view.SetInitialScale(default_zoom_level);
 
             var width = web_view.Width;
-            var height = web_view.Height;
+            //var height = web_view.Height;
 
             //var metrics = Resources.DisplayMetrics;
             //var width = metrics.WidthPixels;
@@ -63,7 +65,7 @@ namespace GeeseDisturberProject.Camera
 
             SetViewSettings(web_view);
 
-            web_view.LoadUrl(data + "?width=" + 320 + "&height=" + 240);
+            web_view.LoadUrl(data + "?width=" + 625 + "&height=" + 245);
         }
 
         private void HandleEvents()
@@ -105,6 +107,7 @@ namespace GeeseDisturberProject.Camera
                 return false;
             }
         }
+
 
         public override bool OnKeyDown(Android.Views.Keycode keyCode, Android.Views.KeyEvent e)
         {

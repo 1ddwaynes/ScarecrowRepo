@@ -19,6 +19,7 @@ namespace GeeseDisturberProject.Settings
     [Activity(Label = "Main Settings")]
     public class SettingsActivity : Activity
     {
+        Setting settings = new Setting();
         //ListView lstData;
         //List<History> lstSource = new List<History>();
         //DataBase db;
@@ -40,101 +41,30 @@ namespace GeeseDisturberProject.Settings
             var edtAddress = FindViewById<EditText>(Resource.Id.edtAddress);
             var edtPort = FindViewById<EditText>(Resource.Id.edtPort);
             //var edtEmail = FindViewById<EditText>(Resource.Id.edtEmail);
-
-
-            var btnAdd = FindViewById<Button>(Resource.Id.btnAdd);
             var btnEdit = FindViewById<Button>(Resource.Id.btnEdit);
-            var btnDelete = FindViewById<Button>(Resource.Id.btnDelete);
 
-            //LoadData
-            //LoadData();
-
-            //Event
-            btnAdd.Click += delegate
+            btnEdit.Click += delegate
             {
-                //History history = new History()
+                settings.EditUrl(edtPort.Text, edtAddress.Text);
+                //int number;
+                //if (int.TryParse(edtAddress.Tag.ToString(), out number) == false)
                 //{
-                //    //Id = int.Parse(edtAddress.Tag.ToString()),
-                //    Address = edtAddress.Text,
-                //    Port = int.Parse(edtPort.Text),
-                //    //Email = edtEmail.Text
-                //};
-                //db.insertIntoTableHistory(history);
-                //LoadData();
+                //    Console.WriteLine("Write correct value");
+                //}
+                //else
+                //{
+                //    History history = new History()
+                //    {
+
+                //        Id = int.Parse(edtAddress.Tag.ToString()),
+                //        Address = edtAddress.Text,
+                //        Port = int.Parse(edtPort.Text),
+                //        //Email = edtEmail.Text
+                //    };
+                //    //db.updateTableHistory(history);
+                //    //LoadData();
+                //}
             };
-
-            btnEdit.Click += delegate {
-                int number;
-                if (int.TryParse(edtAddress.Tag.ToString(), out number) == false)
-                {
-                    Console.WriteLine("Write correct value");
-                }
-                else
-                {
-                    History history = new History()
-                    {
-
-                        Id = int.Parse(edtAddress.Tag.ToString()),
-                        Address = edtAddress.Text,
-                        Port = int.Parse(edtPort.Text),
-                        //Email = edtEmail.Text
-                    };
-                    //db.updateTableHistory(history);
-                    //LoadData();
-                }
-            };
-
-            btnDelete.Click += delegate {
-                int number;
-                if (int.TryParse(edtAddress.Tag.ToString(), out number) == false)
-                {
-                    Console.WriteLine("Write correct value");
-                }
-                else
-                {
-                    History history = new History()
-                    {
-                        Id = int.Parse(edtAddress.Tag.ToString()),
-                        Address = edtAddress.Text,
-                        Port = int.Parse(edtPort.Text),
-                        //Email = edtEmail.Text
-                    };
-                    //db.deleteTableHistory(history);
-                    //LoadData();
-                }
-            };
-
-            //lstData.ItemClick += (s, e) => {
-            //    //Set background for selected item
-            //    for (int i = 0; i < lstData.Count; i++)
-            //    {
-            //        if (e.Position == i)
-            //            lstData.GetChildAt(i).SetBackgroundColor(Android.Graphics.Color.DarkGray);
-            //        else
-            //            lstData.GetChildAt(i).SetBackgroundColor(Android.Graphics.Color.Transparent);
-
-            //    }
-
-            //    //Binding Data
-            //    var txtAddress = e.View.FindViewById<TextView>(Resource.Id.textView2);
-            //    var txtPort = e.View.FindViewById<TextView>(Resource.Id.textView1);
-            //    //var txtEmail = e.View.FindViewById<TextView>(Resource.Id.textView3);
-
-            //    edtAddress.Text = txtAddress.Text;
-            //    edtAddress.Tag = e.Id;
-
-            //    edtPort.Text = txtPort.Text;
-
-            //    //edtEmail.Text = txtEmail.Text;
-            //};
-
         }
-
-        //private void LoadData()
-        //{
-        //    lstSource = db.selectTableHistory();
-        //    var adapter = new ListViewAdapter(this, lstSource);
-        //    lstData.Adapter = adapter;
-        //}
     }
 }

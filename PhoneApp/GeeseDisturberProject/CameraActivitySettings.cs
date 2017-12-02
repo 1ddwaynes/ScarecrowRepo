@@ -14,12 +14,10 @@ using GeeseDisturberProject.Camera;
 using GeeseDisturberProject.Resources.DataHelper;
 using GeeseDisturberProject.Model;
 using Android.Util;
-using Android.Content.PM;
 
 namespace GeeseDisturberProject
 {
-    [Activity(Label = "CameraActivitySettings", ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation,
-    ScreenOrientation = ScreenOrientation.Landscape)]
+    [Activity(Label = "CameraActivitySettings")]
     public class CameraActivitySettings : Activity
     {
         WebView web_view;

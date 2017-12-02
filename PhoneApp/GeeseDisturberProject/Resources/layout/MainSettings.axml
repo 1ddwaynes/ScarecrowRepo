@@ -54,22 +54,10 @@
         android:layout_height="50dp"
         android:orientation="horizontal">
         <Button
-            android:text="Add"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/btnAdd"
-            android:layout_weight="1" />
-        <Button
             android:text="Edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/btnEdit"
-            android:layout_weight="1" />
-        <Button
-            android:text="Delete"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/btnDelete"
             android:layout_weight="1" />
     </LinearLayout>
     <ListView

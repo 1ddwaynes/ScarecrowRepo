@@ -73,8 +73,8 @@ namespace GeeseDisturberProject
 			// aapt resource value: 0x7f05000e
 			public const int Control = 2131034126;
 			
-			// aapt resource value: 0x7f050016
-			public const int ListView = 2131034134;
+			// aapt resource value: 0x7f050014
+			public const int ListView = 2131034132;
 			
 			// aapt resource value: 0x7f050010
 			public const int Settings = 2131034128;
@@ -85,17 +85,11 @@ namespace GeeseDisturberProject
 			// aapt resource value: 0x7f050000
 			public const int WebView = 2131034112;
 			
-			// aapt resource value: 0x7f050013
-			public const int btnAdd = 2131034131;
-			
-			// aapt resource value: 0x7f050015
-			public const int btnDelete = 2131034133;
-			
 			// aapt resource value: 0x7f050009
 			public const int btnDown = 2131034121;
 			
-			// aapt resource value: 0x7f050014
-			public const int btnEdit = 2131034132;
+			// aapt resource value: 0x7f050013
+			public const int btnEdit = 2131034131;
 			
 			// aapt resource value: 0x7f050007
 			public const int btnLeft = 2131034119;
