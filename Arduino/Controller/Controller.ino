@@ -268,11 +268,6 @@ void processGPS(void)
 
 	const char *value = TinyGPSPlus::cardinal(gps.course.value());
 
-	/*if (value == "S")            // make them signed
-	currentLat = -currentLat;
-	if (value == "W")
-	currentLong = -currentLong;*/
-
 	// update the course and distance to waypoint based on our new position
 	distanceToWaypoint();
 	courseToWaypoint();
@@ -404,48 +399,36 @@ void moveAndAvoid(void)
 	else if (sonarDistanceLeft <  TURN_DISTANCE && sonarDistanceLeft > STOP_DISTANCE || sonarDistanceRight <  TURN_DISTANCE && sonarDistanceRight > STOP_DISTANCE)  // getting close, time to turn to avoid object        
 	{
 		setSpeed(SLOW_SPEED);
-		//switch (turnDirection)
-		//{
-		//case straight:                  // going straight currently, so start new turn
-		//{
 
+		if (LeftWall == true)
+		{
+			turnDirection = right;
+		}
+		else if (RightWall == true)
+		{
+			turnDirection = left;
+		}
+		else
+		{
 			if (headingError <= 0)
 				turnDirection = left;
 			else
 				turnDirection = right;
-			turnMotor();  // turn in the new direction
-			return;
-			
-		//	break;
-		//}
-		//case left:                         // if already turning left, try right
-		//{
-		//	turnDirection = right;
-		//	turnMotor();
-		//	break;
-		//}
-		//case right:                       // if already turning right, try left
-		//{
-		//	turnDirection = left;
-		//	turnMotor();
-		//	break;
-		//}
-		//} // end SWITCH
-		//return;
+		}
+		turnMotor();  // turn in the new direction
 	}
-
 
 	else if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
 	{
 		setSpeed(NO_SPEED);
-
-		smartDelay(200);
-		analogWrite(PWM_TURN, TRC_NEUTRAL);     // straighten up
-		turnDirection = straight;
-		analogWrite(PWM_SPEED, speed);
+		turnDirection = straight; // straighten up
+		turnMotor();
+		
+		smartDelay(600);  
 
 		while (sonarDistanceLeft < TURN_DISTANCE && sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
 		{
+			setSpeed(REVERSE_SPEED);
 			autoHornController();
 			processGPS();
 			currentHeading = readCompass();    // get our current heading
@@ -460,8 +443,7 @@ void moveAndAvoid(void)
 			smartDelay(70);
 
 		}
-		setSpeed(NO_SPEED);
-		analogWrite(PWM_SPEED, NOW_SPEED);        // stop backing up
+		setSpeed(NO_SPEED);  // stop backing up
 	}
 } // end of IF TOO CLOSE
 
@@ -539,7 +521,6 @@ void updateDisplay(void)
 		Serial.println("Right");
 	else if (turnDirection == 1)
 		Serial.println("Left");
-	//Serial.println(turnDirection, DEC);
 	Serial.print(F("Free Memory: "));
 	Serial.println(freeRam(), DEC);
 	
@@ -563,17 +544,7 @@ int freeRam()   // display free memory (SRAM)
 
 void checkBoolSonar()
 {
-	if (LeftWall == true)
-	{
-		turnDirection = right;
-		turnRight();
-	}
-	else if (RightWall == true)
-	{
-		turnDirection = left;
-		analogWrite(PWM_TURN, TRC_MIN);
-		no_right = false;
-	}
+
 }
 
 void turnLeft()
@@ -686,7 +657,6 @@ void turnMotor()
 
 static void autoHornController()
 {
-	//Serial.println(millis());
 	digitalWrite(HORN_PIN, LOW);
 
 	unsigned long start = millis();
