@@ -287,13 +287,9 @@ void checkSonar(void)
 	distInLeft = distLc / 2.5;
 	distInRight = distRc / 2.5;
 
-	int distL, distR; //Distance in cm
-
-	distL = distInLeft; // get distqnce in inches from the sensor
-	distR = distInRight; // get distqnce in inches from the sensor
-	if (distL > 235)                                // if too far to measure, return max distance;
+	if (distInLeft > 235)                                // if too far to measure, return max distance;
 		distInLeft = MAX_DISTANCE_IN;
-	if (distR > 235)                                // if too far to measure, return max distance;
+	if (distInRight > 235)                                // if too far to measure, return max distance;
 		distInRight = MAX_DISTANCE_IN;
 	sonarDistanceLeft = (distInLeft + sonarDistanceLeft) / 2;      // add the new value into moving average, use resulting average
 	sonarDistanceRight = (distInRight + sonarDistanceRight) / 2;
@@ -365,7 +361,6 @@ void calcDesiredTurn(void)
 	else if (headingError < 0)
 	{
 		turnDirection = left;
-		no_right = false;
 	}
 	else if (headingError > 0)
 		turnDirection = right;
@@ -377,9 +372,8 @@ void calcDesiredTurn(void)
 void moveAndAvoid(void)
 {
 
-	sonarDistanceLeft = distInLeft; // distc / 2.5;
-	//Serial.println(sonarDistanceLeft);
-	sonarDistanceRight = distInRight;
+	sonarDistanceLeft = distInLeft; // dist  of left sensor from cm to in
+	sonarDistanceRight = distInRight; //dist of right sensor from cm to in
 	//checkBoolSonar();
 	if (sonarDistanceLeft >= SAFE_DISTANCE && sonarDistanceRight >= SAFE_DISTANCE)       // no close objects in front of car
 	{
@@ -388,12 +382,11 @@ void moveAndAvoid(void)
 		else
 			speed = TURN_SPEED;
 		setSpeed(speed);
-		analogWrite(PWM_SPEED, NOW_SPEED);
 		turnMotor();
 		return;
 	}
 
-	if (sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE || sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE)    // not yet time to turn, but slow down
+	else if (sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE || sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE)    // not yet time to turn, but slow down
 	{
 
 		if (turnDirection == straight)
@@ -404,16 +397,13 @@ void moveAndAvoid(void)
 			turnMotor();      // alraedy turning to navigate
 		}
 		setSpeed(speed);
-		analogWrite(PWM_SPEED, NOW_SPEED);
 		//driveMotor->run(FORWARD);
 		return;
 	}
 
-	if (sonarDistanceLeft <  TURN_DISTANCE && sonarDistanceLeft > STOP_DISTANCE || sonarDistanceRight <  TURN_DISTANCE && sonarDistanceRight > STOP_DISTANCE)  // getting close, time to turn to avoid object        
+	else if (sonarDistanceLeft <  TURN_DISTANCE && sonarDistanceLeft > STOP_DISTANCE || sonarDistanceRight <  TURN_DISTANCE && sonarDistanceRight > STOP_DISTANCE)  // getting close, time to turn to avoid object        
 	{
-		speed = SLOW_SPEED;
-		setSpeed(speed);
-		analogWrite(PWM_SPEED, NOW_SPEED);
+		setSpeed(SLOW_SPEED);
 		//switch (turnDirection)
 		//{
 		//case straight:                  // going straight currently, so start new turn
@@ -445,15 +435,15 @@ void moveAndAvoid(void)
 	}
 
 
-	if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
+	else if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
 	{
 		setSpeed(NO_SPEED);
-		analogWrite(PWM_SPEED, speed);
-		smartDelay(50);
+
+		smartDelay(200);
 		analogWrite(PWM_TURN, TRC_NEUTRAL);     // straighten up
 		turnDirection = straight;
-		setSpeed(REVERSE_SPEED);
 		analogWrite(PWM_SPEED, speed);
+
 		while (sonarDistanceLeft < TURN_DISTANCE && sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
 		{
 			autoHornController();
@@ -472,12 +462,6 @@ void moveAndAvoid(void)
 		}
 		setSpeed(NO_SPEED);
 		analogWrite(PWM_SPEED, NOW_SPEED);        // stop backing up
-		return;
-	}
-	else
-	{
-		checkBoolSonar();
-		return;
 	}
 } // end of IF TOO CLOSE
 
@@ -503,9 +487,6 @@ void nextWaypoint()
 	courseToWaypoint();
 
 }  // nextWaypoint()
-
-
-
 
 void updateDisplay(void)
 {
@@ -597,34 +578,26 @@ void checkBoolSonar()
 
 void turnLeft()
 {
-	setSpeed(TURN_SPEED);
-	turnDirection = left;
-	analogWrite(PWM_SPEED, NOW_SPEED);
-	analogWrite(PWM_TURN, TRC_MIN);
-
 	unsigned long start = millis();
+
+	analogWrite(PWM_TURN, TRC_MIN);
 
 	if (start - startTime_6 >= turn_speed_total)
 	{
 		turnDirection = straight;
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
-		no_right = true;
+		no_right = false;
 		startTime_6 = start;
 	}
 	return;
 
 }
-void turnRight()
+void turnRight() //turn to the right
 {
-	setSpeed(TURN_SPEED);
-	analogWrite(PWM_SPEED, NOW_SPEED);
-
-	if (no_right == false)
+	if (no_right != true) // checks to make sure right direction does not go over 1 in throw
 	{
-		turnDirection = right;
-		analogWrite(PWM_TURN, TRC_MAX);
-
 		unsigned long start = millis();
+		analogWrite(PWM_TURN, TRC_MAX);
 
 		if (start - startTime_3 >= turn_speed_total)
 		{
@@ -634,48 +607,46 @@ void turnRight()
 			startTime_3 = start;
 		}
 	}
-	return;
 }
 
 void setSpeed(int speed)
 {
-	NOW_SPEED = speed;
+	analogWrite(PWM_SPEED, speed);
 }
 
 void turnMotor()
 {
+	setSpeed(TURN_SPEED);
+
 	if (turnDirection == straight)
 	{
-		no_right = false;
 		if (oldTurnDirection == left)
 		{
+			unsigned long start = millis();
 			analogWrite(PWM_TURN, TRC_MAX);
 			
-
-			unsigned long start = millis();
 			if (start - startTime_4 >= turn_speed_total)
 			{		
-				analogWrite(PWM_TURN, TRC_NEUTRAL); // this is cuasing the bug
-
+				analogWrite(PWM_TURN, TRC_NEUTRAL);
+				no_right = false;
 				startTime_4 = start;
-				turnDirection = straight;
+				oldTurnDirection = straight;
 			}
 		}
-		if (oldTurnDirection == right)
+		if (oldTurnDirection == right) // if direction was orginally right and going straight
 		{
-			analogWrite(PWM_TURN, TRC_MIN);
-
 			unsigned long start = millis();
+			analogWrite(PWM_TURN, TRC_MIN); 
+
 			if (start - startTime_5 >= turn_speed_total)
 			{
 				analogWrite(PWM_TURN, TRC_NEUTRAL);
-
+				no_right = false;
 				startTime_5 = start;
-				turnDirection = straight;
+				oldTurnDirection = straight;
 			}
 		}
 		else
-			analogWrite(PWM_TURN, TRC_NEUTRAL);
 			oldTurnDirection = straight;
 
 	}
@@ -689,11 +660,10 @@ void turnMotor()
 			turnMotor();
 			turnDirection = left;
 			turnLeft();
-			oldTurnDirection = left;
 		}
 		else
-			turnLeft;
-		oldTurnDirection = right;
+			turnLeft();
+		oldTurnDirection = left;
 		
 	}
 
@@ -706,14 +676,11 @@ void turnMotor()
 			turnMotor();
 			turnDirection = right;
 			turnRight();
-			oldTurnDirection = right;
 		}
 		else
 			turnRight;
 		oldTurnDirection = right;
 	}
-	return;
-
 }
 
 
@@ -770,6 +737,11 @@ void debug()
 		Serial.print("Soft Serial device overflowed? ");
 		Serial.println(altSerial.overflow() ? "YES!" : "No");
 	}
+}
+
+static void toDoAuto()
+{
+
 }
 
 static void smartDelay(unsigned long ms)
