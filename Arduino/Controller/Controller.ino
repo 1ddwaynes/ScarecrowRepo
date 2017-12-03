@@ -9,9 +9,13 @@ static const uint32_t SERIAL_PORT_BAUD = 115200;
 int distLc, distRc;
 int distInLeft, distInRight;
 
-double turn_speed = 1.18;
+boolean auto_control = true; //sets to auto_pilot
 
-unsigned long startTime_1 = 0, startTime_2 = 0, startTime_3 = 0, startTime_4 = 0, startTime_5 = 0;
+double turn_speed = 1.18; // 1.18 in / sec (12V)
+double turn_speed_total = (1 / 1.18) / 2;
+
+unsigned long startTime_1 = 0, startTime_2 = 0, startTime_3 = 0, startTime_4 = 0, startTime_5 = 0, startTime_sD = 0,
+startTime_6 = 0;
 unsigned long interval = 30000;
 
 unsigned long start2 = 0, start1 = 0;
@@ -19,11 +23,11 @@ boolean no_right = false; //Limits right turning
 
 boolean RightWall = false, LeftWall = false; //Is something in front or not
 
-static const int trig1_Pin = 12, echo1_Pin = 11; // Left UltraSonic Sensor Pins - Mega Pin (RX_pin = 34, TX_pin = 35)
-static const int trig2_Pin = 7, echo2_Pin = 6; // Left UltraSonic Sensor Pins - Mega Pin (RX_pin = 36, TX_pin = 37)
+static const int trig1_Pin = 34, echo1_Pin = 35; // Left UltraSonic Sensor Pins - Mega Pin (RX_pin = 34, TX_pin = 35)
+static const int trig2_Pin = 36, echo2_Pin = 37; // Right UltraSonic Sensor Pins - Mega Pin (RX_pin = 36, TX_pin = 37)
 static const uint32_t GPS_BAUD = 9600;
 static const int LED_G_Pin = 5; 
-static const int HORN_PIN = 4; //Pin for horn connected to relay - Mega Pin (42)
+static const int HORN_PIN = 42; //Pin for horn connected to relay - Mega Pin (42)
 static const int opSens = A3; //Debug Pin
 
 //**** Code provided by: http://www.instructables.com/id/Arduino-Powered-Autonomous-Vehicle/
@@ -31,10 +35,10 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_CM 600                        // Maximum distance we want to ping for (in CENTIMETERS). Maximum sensor distance is rated at 400-500cm.  
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
-#define FAST_SPEED 240
-#define NORMAL_SPEED 210
+#define FAST_SPEED 200
+#define NORMAL_SPEED 180
 #define TURN_SPEED 170
-#define SLOW_SPEED 140
+#define SLOW_SPEED 150
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
 int NOW_SPEED;
@@ -86,8 +90,8 @@ static const int RC_NUM_CHANNELS = 2;
 static const int RC_xAxis = 0;
 static const int RC_yAxis = 1;
 
-static const int RC_xAxis_INPUT = A5; // Pin for LinearActuator Mega - (A12)
-static const int RC_yAxis_INPUT = A4; // Pin for Brushed DC Motor Mega - (A13)
+static const int RC_xAxis_INPUT = A12; // Pin for LinearActuator Mega - (A12)
+static const int RC_yAxis_INPUT = A13; // Pin for Brushed DC Motor Mega - (A13)
 
 uint16_t rc_values[RC_NUM_CHANNELS];
 uint32_t rc_start[RC_NUM_CHANNELS];
@@ -99,29 +103,15 @@ volatile uint16_t rc_shared[RC_NUM_CHANNELS];
 // **** Code provided by: http://www.instructables.com/id/Rc-Controller-for-Better-Control-Over-Arduino-Proj/
 //
 
-#define SRC_NEUTRAL 127
-#define SRC_MAX 255
-#define SRC_MIN 0
-#define TRC_NEUTRAL 127
-#define TRC_MAX 255
-#define TRC_MIN 0
-#define RC_DEADBAND 7
-#define ERROR_center 5
-#define pERROR 13
+#define SRC_NEUTRAL 127 // neutral speed
+#define SRC_MAX 0 // go backward
+#define SRC_MIN 255 // go forward
+#define TRC_NEUTRAL 127  // neutral speed
+#define TRC_MAX 255 // turn right
+#define TRC_MIN 0 // turn left
 
-uint16_t unSteeringMin = SRC_MIN + pERROR;
-uint16_t unSteeringMax = SRC_MAX - pERROR;
-uint16_t unSteeringCenter = SRC_NEUTRAL;
-
-uint16_t unThrottleMin = TRC_MIN + pERROR;
-uint16_t unThrottleMax = TRC_MAX - pERROR;
-uint16_t unThrottleCenter = TRC_NEUTRAL;
-
-#define PWM_MIN 0
-#define PWM_MAX 255
-
-static const int PWM_TURN = 6; //PWM signal pin for LinearAcutator (CH3)  Mega - (A12)
-static const int PWM_SPEED = 7; //PWM signal pin for Brushed DC Motor (CH1) Mega - (A13)
+static const int PWM_TURN = 9; //PWM signal pin for LinearAcutator (CH3)  Mega - (A12)
+static const int PWM_SPEED = 12; //PWM signal pin for Brushed DC Motor (CH1) Mega - (A13)
 
 
 // Assign your channel in pins
@@ -149,8 +139,8 @@ void setup() {
 	//pinMode(enA, OUTPUT);
 	//pinMode(enB, OUTPUT);
 
-	//enableInterrupt(RC_xAxis_INPUT, calc_ch1, CHANGE);
-	//enableInterrupt(RC_yAxis_INPUT, calc_ch3, CHANGE);
+	enableInterrupt(RC_xAxis_INPUT, calc_ch1, CHANGE);
+	enableInterrupt(RC_yAxis_INPUT, calc_ch3, CHANGE);
 
 	pinMode(trig1_Pin, OUTPUT);
 	pinMode(echo1_Pin, INPUT);
@@ -174,15 +164,15 @@ void setup() {
 
 void loop() {
 	int value_op = analogRead(opSens);
-	Serial.print("Debug Pin Value = ");
-	Serial.println(value_op);
+	//Serial.print("Debug Pin Value = ");
+	//Serial.println(value_op);
 
 	// ****
 	// Code provide by: 
 	rc_read_values();
 
-	Serial.print(F("yAX ")); Serial.print(rc_values[RC_xAxis]); Serial.println("\t");
-	Serial.print(F("xAX ")); Serial.print(rc_values[RC_yAxis]); Serial.print("\t");
+	//Serial.print(F("yAX ")); Serial.print(rc_values[RC_xAxis]); Serial.println("\t");
+	//Serial.print(F("xAX ")); Serial.print(rc_values[RC_yAxis]); Serial.print("\t");
 
 	//
 	// ****
@@ -192,7 +182,8 @@ void loop() {
 
 
 	analogWrite(LED_G_Pin, 20);
-	boolean auto_control = true;
+	
+	
 
 	while (altSerial.available() > 0)
 		gps.encode(altSerial.read());
@@ -218,12 +209,12 @@ void loop() {
 	
 	else
 	{
-		rc_control(RCx, RCx);
-		checkSonar();
-		updateDisplay();
+		rc_control(RCx, RCy);
+		//checkSonar();
+		//updateDisplay();
 	}
 	// no less than 50 ms (as per JSN Ultrasonic sensor specification)
-	smartDelay(50);
+	smartDelay(70);
 }
 
 // ****
@@ -427,7 +418,7 @@ void moveAndAvoid(void)
 		//{
 		//case straight:                  // going straight currently, so start new turn
 		//{
-		checkBoolSonar();
+
 			if (headingError <= 0)
 				turnDirection = left;
 			else
@@ -456,12 +447,13 @@ void moveAndAvoid(void)
 
 	if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
 	{
-		analogWrite(PWM_SPEED, SRC_NEUTRAL);
+		setSpeed(NO_SPEED);
+		analogWrite(PWM_SPEED, speed);
+		smartDelay(50);
 		analogWrite(PWM_TURN, TRC_NEUTRAL);     // straighten up
 		turnDirection = straight;
-		analogWrite(PWM_SPEED, REVERSE_SPEED);  // go back at higher speet
-		speed = REVERSE_SPEED;
-		setSpeed(speed);
+		setSpeed(REVERSE_SPEED);
+		analogWrite(PWM_SPEED, speed);
 		while (sonarDistanceLeft < TURN_DISTANCE && sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
 		{
 			autoHornController();
@@ -478,7 +470,8 @@ void moveAndAvoid(void)
 			smartDelay(70);
 
 		}
-		analogWrite(PWM_SPEED, SRC_NEUTRAL);        // stop backing up
+		setSpeed(NO_SPEED);
+		analogWrite(PWM_SPEED, NOW_SPEED);        // stop backing up
 		return;
 	}
 	else
@@ -501,7 +494,7 @@ void nextWaypoint()
 	{
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
 		turnDirection = straight;
-		analogWrite(PWM_SPEED, SRC_NEUTRAL);
+		analogWrite(PWM_SPEED, NO_SPEED);
 		loopForever();
 	}
 
@@ -545,11 +538,11 @@ void updateDisplay(void)
 	//Serial.println(GPS.angle);
 
 	//Serial.println(GPS.lastNMEA());
-
+	
 	Serial.print(F("Sonar Left = "));
-	Serial.print(sonarDistanceLeft, DEC);
+	Serial.println(sonarDistanceLeft, DEC);
 	Serial.print(F(" Sonar Right = "));
-	Serial.print(sonarDistanceRight, DEC);
+	Serial.println(sonarDistanceRight, DEC);
 	Serial.print(F(" Spd = "));
 	Serial.print(speed, DEC);
 	Serial.print(F("  Target = "));
@@ -568,7 +561,7 @@ void updateDisplay(void)
 	//Serial.println(turnDirection, DEC);
 	Serial.print(F("Free Memory: "));
 	Serial.println(freeRam(), DEC);
-
+	
 }  // updateDisplay()  
 
 void loopForever(void)
@@ -602,24 +595,45 @@ void checkBoolSonar()
 	}
 }
 
+void turnLeft()
+{
+	setSpeed(TURN_SPEED);
+	turnDirection = left;
+	analogWrite(PWM_SPEED, NOW_SPEED);
+	analogWrite(PWM_TURN, TRC_MIN);
+
+	unsigned long start = millis();
+
+	if (start - startTime_6 >= turn_speed_total)
+	{
+		turnDirection = straight;
+		analogWrite(PWM_TURN, TRC_NEUTRAL);
+		no_right = true;
+		startTime_6 = start;
+	}
+	return;
+
+}
 void turnRight()
 {
+	setSpeed(TURN_SPEED);
+	analogWrite(PWM_SPEED, NOW_SPEED);
+
 	if (no_right == false)
 	{
+		turnDirection = right;
 		analogWrite(PWM_TURN, TRC_MAX);
-		
+
 		unsigned long start = millis();
 
-		if (start - startTime_3 >= 847)
+		if (start - startTime_3 >= turn_speed_total)
 		{
+			turnDirection = straight;
 			analogWrite(PWM_TURN, TRC_NEUTRAL);
 			no_right = true;
 			startTime_3 = start;
 		}
-		analogWrite(PWM_TURN, TRC_NEUTRAL);
 	}
-	else
-		return;
 	return;
 }
 
@@ -639,10 +653,9 @@ void turnMotor()
 			
 
 			unsigned long start = millis();
-			if (start - startTime_4 >= 847)
-			{
-				
-				analogWrite(PWM_TURN, TRC_NEUTRAL);
+			if (start - startTime_4 >= turn_speed_total)
+			{		
+				analogWrite(PWM_TURN, TRC_NEUTRAL); // this is cuasing the bug
 
 				startTime_4 = start;
 				turnDirection = straight;
@@ -653,7 +666,7 @@ void turnMotor()
 			analogWrite(PWM_TURN, TRC_MIN);
 
 			unsigned long start = millis();
-			if (start - startTime_5 >= 847)
+			if (start - startTime_5 >= turn_speed_total)
 			{
 				analogWrite(PWM_TURN, TRC_NEUTRAL);
 
@@ -669,11 +682,19 @@ void turnMotor()
 
 	else if (turnDirection == left)
 	{
-		turnDirection = straight;
-		turnMotor();
-		oldTurnDirection = left;
-		analogWrite(PWM_TURN, TRC_MAX);
-		no_right = false;
+		if (oldTurnDirection == right)
+		{
+
+			turnDirection = straight;
+			turnMotor();
+			turnDirection = left;
+			turnLeft();
+			oldTurnDirection = left;
+		}
+		else
+			turnLeft;
+		oldTurnDirection = right;
+		
 	}
 
 	else if (turnDirection == right)
@@ -758,7 +779,8 @@ static void smartDelay(unsigned long ms)
 	{
 		while (altSerial.available())
 			gps.encode(altSerial.read());
-		turnMotor();
+		if (auto_control == true)
+			turnMotor();
 
 	} while (millis() - start < ms);
 }
@@ -904,18 +926,18 @@ static int getFrontRightDistance()
 
 static void rc_control(int xAxis, int yAxis)
 {
-	int DCmotor = map(yAxis, 1828, 1160, 0, 255); // Map the potentiometer value from 0 to 255
+	int DCmotor = map(yAxis, 1730, 1100, 0, 255); // Map the potentiometer value from 0 to 255
 	analogWrite(PWM_SPEED, DCmotor); // Send PWM signal to L298N Enable pin
 	Serial.print("CH3 :");
 	Serial.print(DCmotor);
 	Serial.print(" Value: ");
-	Serial.println(yAxis);
+	Serial.print(yAxis);
 
-	int linearActuator = map(xAxis, 1932, 1075, 0, 255); // Map the potentiometer value from 0 to 255
+	int linearActuator = map(xAxis, 1946, 1050, 0, 255); // Map the potentiometer value from 0 to 255
 	analogWrite(PWM_TURN, linearActuator); // Send PWM signal to L298N Enable pin
-	Serial.print("CH1 :");
+	Serial.print(" - CH1 :");
 	Serial.print(linearActuator);
 	Serial.print(" Value: ");
-	Serial.print(xAxis);
+	Serial.println(xAxis);
 	
 }

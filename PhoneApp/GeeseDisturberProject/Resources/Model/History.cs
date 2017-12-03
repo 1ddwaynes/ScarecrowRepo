@@ -66,7 +66,7 @@ namespace GeeseDisturberProject.Model
             {
                 Address_n = "http://proxy7.remote-iot.com:";
 
-                Port_n = "25197";
+                Port_n = "24358";
             }
         }
     }

@@ -16,7 +16,7 @@ public class CameraActivitySettings
 	}
 
 
-	public CameraActivitySettings ()
+	public CameraActivitySettings () throws java.lang.Throwable
 	{
 		super ();
 		if (getClass () == CameraActivitySettings.class)

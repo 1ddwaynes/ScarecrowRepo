@@ -16,7 +16,7 @@ public class SettingsActivity
 	}
 
 
-	public SettingsActivity ()
+	public SettingsActivity () throws java.lang.Throwable
 	{
 		super ();
 		if (getClass () == SettingsActivity.class)

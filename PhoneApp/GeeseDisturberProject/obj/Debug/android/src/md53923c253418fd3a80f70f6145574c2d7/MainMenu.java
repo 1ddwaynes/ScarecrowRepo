@@ -16,7 +16,7 @@ public class MainMenu
 	}
 
 
-	public MainMenu ()
+	public MainMenu () throws java.lang.Throwable
 	{
 		super ();
 		if (getClass () == MainMenu.class)
