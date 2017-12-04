@@ -9,7 +9,11 @@ static const uint32_t SERIAL_PORT_BAUD = 115200;
 int distLc, distRc;
 int distInLeft, distInRight;
 
+/////
+
 boolean auto_control = true; //sets to auto_pilot
+
+/////
 
 double turn_speed = 1.18; // 1.18 in / sec (12V)
 double turn_speed_total = (1 / 1.18) / 2;
@@ -35,14 +39,14 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_CM 600                        // Maximum distance we want to ping for (in CENTIMETERS). Maximum sensor distance is rated at 400-500cm.  
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
-#define FAST_SPEED 200
-#define NORMAL_SPEED 180
-#define TURN_SPEED 170
-#define SLOW_SPEED 150
+#define FAST_SPEED 55 // 200
+#define NORMAL_SPEED 75 //180
+#define TURN_SPEED 95 //160
+#define SLOW_SPEED 125 //130
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
-int NOW_SPEED;
-#define REVERSE_SPEED 50
+int NOW_SPEED = speed;
+#define REVERSE_SPEED 150 //50
 
 #define TURN_LEFT 1
 #define TURN_RIGHT 2
@@ -77,8 +81,8 @@ directions turnDirection = straight, oldTurnDirection = straight;
 
 // Object avoidance distances (in inches)
 #define SAFE_DISTANCE 70
-#define TURN_DISTANCE 40
-#define STOP_DISTANCE 20
+#define TURN_DISTANCE 50
+#define STOP_DISTANCE 30
 //
 // ****
 
@@ -104,8 +108,8 @@ volatile uint16_t rc_shared[RC_NUM_CHANNELS];
 //
 
 #define SRC_NEUTRAL 127 // neutral speed
-#define SRC_MAX 0 // go backward
-#define SRC_MIN 255 // go forward
+#define SRC_MAX 255 // go backward
+#define SRC_MIN 0 // go forward
 #define TRC_NEUTRAL 127  // neutral speed
 #define TRC_MAX 255 // turn right
 #define TRC_MIN 0 // turn left
@@ -180,11 +184,8 @@ void loop() {
 	int RCx = rc_values[RC_xAxis];
 	int RCy = rc_values[RC_yAxis];
 
-
 	analogWrite(LED_G_Pin, 20);
 	
-	
-
 	while (altSerial.available() > 0)
 		gps.encode(altSerial.read());
 
@@ -214,7 +215,7 @@ void loop() {
 		//updateDisplay();
 	}
 	// no less than 50 ms (as per JSN Ultrasonic sensor specification)
-	smartDelay(70);
+	smartDelay(100);
 }
 
 // ****
@@ -257,7 +258,6 @@ static void autoControl()
 
 	// update display and serial monitor    
 	updateDisplay();
-
 }
 
 void processGPS(void)
@@ -276,18 +276,12 @@ void processGPS(void)
 
 void checkSonar(void)
 {
-	distLc = getFrontLeftDistance();
-	distRc = getFrontRightDistance();
-
-	distInLeft = distLc / 2.5;
-	distInRight = distRc / 2.5;
-
 	if (distInLeft > 235)                                // if too far to measure, return max distance;
 		distInLeft = MAX_DISTANCE_IN;
 	if (distInRight > 235)                                // if too far to measure, return max distance;
 		distInRight = MAX_DISTANCE_IN;
-	sonarDistanceLeft = (distInLeft + sonarDistanceLeft) / 2;      // add the new value into moving average, use resulting average
-	sonarDistanceRight = (distInRight + sonarDistanceRight) / 2;
+	sonarDistanceLeft = getFrontLeftDistance();// (distInLeft + sonarDistanceLeft) / 2;      // add the new value into moving average, use resulting average
+	sonarDistanceRight = getFrontRightDistance();// (distInRight + sonarDistanceRight) / 2;
 } // checkSonar()
 
 int readCompass(void)
@@ -317,9 +311,6 @@ int distanceToWaypoint()
 	return (int)distanceToTarget;
 }  // distanceToWaypoint()
 
-
-
-
    // returns course in degrees (North=0, West=270) from position 1 to position 2,
    // both specified as signed decimal-degrees latitude and longitude.
    // Because Earth is no exact sphere, calculated course may be off by a tiny fraction.
@@ -342,7 +333,7 @@ int courseToWaypoint()
 void calcDesiredTurn(void)
 {
 	// calculate where we need to turn to head to destination
-	headingError = targetHeading - currentHeading;
+	headingError = targetHeading - currentHeading; // error in direction
 
 	// adjust for compass wrap
 	if (headingError < -180)
@@ -353,32 +344,40 @@ void calcDesiredTurn(void)
 	// calculate which way to turn to intercept the targetHeading
 	if (abs(headingError) <= HEADING_TOLERANCE)      // if within tolerance, don't turn
 		turnDirection = straight;
-	else if (headingError < 0)
+	else if (headingError < -1)
 	{
-		turnDirection = left;
+		turnDirection = left; //12345 <- debug point
 	}
-	else if (headingError > 0)
+	else if (headingError > 1)
+	{
 		turnDirection = right;
+	}
 	else
+	{
 		turnDirection = straight;
+	}
 
 }  // calcDesiredTurn()
 
 void moveAndAvoid(void)
 {
-
-	sonarDistanceLeft = distInLeft; // dist  of left sensor from cm to in
-	sonarDistanceRight = distInRight; //dist of right sensor from cm to in
+	//sonarDistanceLeft = distInLeft; // dist  of left sensor from cm to in
+	//sonarDistanceRight = distInRight; //dist of right sensor from cm to in
 	//checkBoolSonar();
-	if (sonarDistanceLeft >= SAFE_DISTANCE && sonarDistanceRight >= SAFE_DISTANCE)       // no close objects in front of car
+	if (sonarDistanceLeft >= SAFE_DISTANCE || sonarDistanceRight >= SAFE_DISTANCE)       // no close objects in front of car
 	{
 		if (turnDirection == straight)
+		{
 			speed = FAST_SPEED;
+			setSpeed(speed);
+		}
 		else
+		{
 			speed = TURN_SPEED;
-		setSpeed(speed);
+			setSpeed(speed);
+		}
+		
 		turnMotor();
-		return;
 	}
 
 	else if (sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE || sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE)    // not yet time to turn, but slow down
@@ -392,41 +391,39 @@ void moveAndAvoid(void)
 			turnMotor();      // alraedy turning to navigate
 		}
 		setSpeed(speed);
-		//driveMotor->run(FORWARD);
-		return;
 	}
 
 	else if (sonarDistanceLeft <  TURN_DISTANCE && sonarDistanceLeft > STOP_DISTANCE || sonarDistanceRight <  TURN_DISTANCE && sonarDistanceRight > STOP_DISTANCE)  // getting close, time to turn to avoid object        
 	{
 		setSpeed(SLOW_SPEED);
 
-		if (LeftWall == true)
+		if (LeftWall == true && RightWall != true)
 		{
 			turnDirection = right;
 		}
-		else if (RightWall == true)
+		else if (RightWall == true && LeftWall != true)
 		{
 			turnDirection = left;
 		}
-		else
+		/*else
 		{
 			if (headingError <= 0)
 				turnDirection = left;
 			else
 				turnDirection = right;
-		}
+		}*/
 		turnMotor();  // turn in the new direction
 	}
 
-	else if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
+	else if (sonarDistanceLeft < STOP_DISTANCE || sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
 	{
 		setSpeed(NO_SPEED);
 		turnDirection = straight; // straighten up
 		turnMotor();
-		
-		smartDelay(600);  
 
-		while (sonarDistanceLeft < TURN_DISTANCE && sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
+		Serial.println("\n\nSTOP\n\n");
+
+		while (sonarDistanceLeft < TURN_DISTANCE || sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
 		{
 			setSpeed(REVERSE_SPEED);
 			autoHornController();
@@ -434,21 +431,16 @@ void moveAndAvoid(void)
 			currentHeading = readCompass();    // get our current heading
 			calcDesiredTurn();                // calculate how we would optimatally turn, without regard to obstacles      
 
-											  // distance in front of us, move, and avoid obstacles as necessary
-			checkSonar();
+			checkSonar();		// distance in front of us, move, and avoid obstacles as necessary
 
 			// update display and serial monitor    
 			updateDisplay();
-			Serial.println("in while");
+			Serial.println("Reversing");
 			smartDelay(70);
-
 		}
 		setSpeed(NO_SPEED);  // stop backing up
 	}
 } // end of IF TOO CLOSE
-
-
-
 
 void nextWaypoint()
 {
@@ -521,6 +513,13 @@ void updateDisplay(void)
 		Serial.println("Right");
 	else if (turnDirection == 1)
 		Serial.println("Left");
+	Serial.print(F("  Old Direction = "));
+	if (oldTurnDirection == 99)
+		Serial.println("Straight");
+	else if (oldTurnDirection == 2)
+		Serial.println("Right");
+	else if (oldTurnDirection == 1)
+		Serial.println("Left");
 	Serial.print(F("Free Memory: "));
 	Serial.println(freeRam(), DEC);
 	
@@ -542,11 +541,6 @@ int freeRam()   // display free memory (SRAM)
 //
 // ****
 
-void checkBoolSonar()
-{
-
-}
-
 void turnLeft()
 {
 	unsigned long start = millis();
@@ -555,6 +549,7 @@ void turnLeft()
 
 	if (start - startTime_6 >= turn_speed_total)
 	{
+		Serial.println("Turning left");
 		turnDirection = straight;
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
 		no_right = false;
@@ -572,6 +567,7 @@ void turnRight() //turn to the right
 
 		if (start - startTime_3 >= turn_speed_total)
 		{
+			Serial.println("Turning right");
 			turnDirection = straight;
 			analogWrite(PWM_TURN, TRC_NEUTRAL);
 			no_right = true;
@@ -587,7 +583,6 @@ void setSpeed(int speed)
 
 void turnMotor()
 {
-	setSpeed(TURN_SPEED);
 
 	if (turnDirection == straight)
 	{
@@ -599,7 +594,6 @@ void turnMotor()
 			if (start - startTime_4 >= turn_speed_total)
 			{		
 				analogWrite(PWM_TURN, TRC_NEUTRAL);
-				no_right = false;
 				startTime_4 = start;
 				oldTurnDirection = straight;
 			}
@@ -619,22 +613,23 @@ void turnMotor()
 		}
 		else
 			oldTurnDirection = straight;
-
 	}
 
 	else if (turnDirection == left)
 	{
 		if (oldTurnDirection == right)
 		{
-
 			turnDirection = straight;
 			turnMotor();
 			turnDirection = left;
 			turnLeft();
+			oldTurnDirection = left;
 		}
 		else
+		{
 			turnLeft();
-		oldTurnDirection = left;
+			oldTurnDirection = left;
+		}
 		
 	}
 
@@ -642,15 +637,17 @@ void turnMotor()
 	{	
 		if (oldTurnDirection == left)
 		{
-			
 			turnDirection = straight;
 			turnMotor();
 			turnDirection = right;
 			turnRight();
+			oldTurnDirection = right;
 		}
 		else
-			turnRight;
-		oldTurnDirection = right;
+		{
+			turnRight();
+			oldTurnDirection = right;
+		}
 	}
 }
 
@@ -663,11 +660,10 @@ static void autoHornController()
 	if (start - startTime_1 >= interval)
 	{
 		digitalWrite(HORN_PIN, HIGH);
-		smartDelay(100);
+		//smartDelay(100);
 
 		startTime_1 = start;
 	}
-
 }
 
 void hornController()
@@ -675,10 +671,10 @@ void hornController()
 	digitalWrite(HORN_PIN, LOW);
 
 	unsigned long start_2 = millis();
-	if (start_2 - startTime_2 >= 1000)
+	if (start_2 - startTime_2 >= 6000)
 	{
 		digitalWrite(HORN_PIN, HIGH);
-		smartDelay(100);
+		//smartDelay(100);
 
 		startTime_2 = start_2;
 	}
@@ -707,11 +703,6 @@ void debug()
 		Serial.print("Soft Serial device overflowed? ");
 		Serial.println(altSerial.overflow() ? "YES!" : "No");
 	}
-}
-
-static void toDoAuto()
-{
-
 }
 
 static void smartDelay(unsigned long ms)
@@ -777,8 +768,7 @@ static const char* printStr(const char *str, int len)
 
 static int getFrontLeftDistance()
 {
-	long duration;
-	int distanceCm;
+	long duration = 0, distance = 0;
 	boolean error_range = false;
 
 	// Clears the trigPin
@@ -798,33 +788,33 @@ static int getFrontLeftDistance()
 	if (duration < 1740)
 	{
 		duration = 1740;
-
 	}
 
 	// Calculating the distance (cm)
-	distanceCm = (int) duration / 29 / 2;
+	distance = (duration * 1.1364) / 74 / 2;
 
-	if (distanceCm < 177.8)
+	if (distance < 177.8)
 	{
 		LeftWall = true;
 	}
 	else
-		LeftWall = false;
-
-	if (distanceCm <= 600 && distanceCm >= 20)
 	{
-		if (distanceCm <= 60 && distanceCm >= 20)
+		LeftWall = false;
+	}
+
+	if (distance <= 600 && distance >= 20)
+	{
+		if (distance <= 60 && distance >= 20)
 		{
 			hornController();
 		}
-		return distanceCm;
+		return distance;
 	}
 }
 
 static int getFrontRightDistance()
 {
-	 long duration;
-	float distanceCm;
+	 long duration, distance;
 
 	// Clears the trigPin
 	digitalWrite(trig2_Pin, LOW);
@@ -845,41 +835,44 @@ static int getFrontRightDistance()
 		duration = 1740;
 	}
 
-	if (distanceCm < 177.8)
+	// Calculating the distance (in)
+	distance = (duration * 1.1364) / 74 / 2;
+
+	if (distance < 177.8)
+	{
+		RightWall = false;
+	}
+	else
 	{
 		RightWall = true;
 	}
-	else
-		RightWall = false;
 
-	// Calculating the distance (cm)
-	distanceCm = (int)duration / 29 / 2;
-
-	if (distanceCm <= 600 && distanceCm >= 20)
+	if (distance <= 600 && distance >= 20)
 	{
-		if (distanceCm <= 60 && distanceCm >= 20)
+		if (distance <= 60 && distance >= 20)
 		{
 			hornController();
 		}
-		return distanceCm;
+		return distance;
 	}
 
 }
 
 static void rc_control(int xAxis, int yAxis)
 {
-	int DCmotor = map(yAxis, 1730, 1100, 0, 255); // Map the potentiometer value from 0 to 255
+	int DCmotor = map(yAxis, 1780, 1100, 255, 0); // Map the potentiometer value from 0 to 255
 	analogWrite(PWM_SPEED, DCmotor); // Send PWM signal to L298N Enable pin
 	Serial.print("CH3 :");
 	Serial.print(DCmotor);
 	Serial.print(" Value: ");
 	Serial.print(yAxis);
 
-	int linearActuator = map(xAxis, 1946, 1050, 0, 255); // Map the potentiometer value from 0 to 255
+	int linearActuator = map(xAxis, 2000, 1050, 0, 255); // Map the potentiometer value from 0 to 255
 	analogWrite(PWM_TURN, linearActuator); // Send PWM signal to L298N Enable pin
 	Serial.print(" - CH1 :");
 	Serial.print(linearActuator);
 	Serial.print(" Value: ");
-	Serial.println(xAxis);
-	
+	Serial.println(xAxis);	
+
+	smartDelay(500);
 }
