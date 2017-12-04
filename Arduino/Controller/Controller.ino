@@ -147,9 +147,9 @@ void setup() {
 	enableInterrupt(RC_yAxis_INPUT, calc_ch3, CHANGE);
 
 	pinMode(trig1_Pin, OUTPUT);
-	pinMode(echo1_Pin, INPUT);
+	pinMode(echo1_Pin, INPUT_PULLUP);
 	pinMode(trig2_Pin, OUTPUT);
-	pinMode(echo2_Pin, INPUT);
+	pinMode(echo2_Pin, INPUT_PULLUP);
 
 	pinMode(opSens, INPUT);
 	pinMode(LED_G_Pin, OUTPUT);
@@ -266,7 +266,7 @@ void processGPS(void)
 	currentLat = gps.location.lat();
 	currentLong = gps.location.lng();
 
-	const char *value = TinyGPSPlus::cardinal(gps.course.value());
+	//const char *value = TinyGPSPlus::cardinal(gps.course.value());
 
 	// update the course and distance to waypoint based on our new position
 	distanceToWaypoint();
@@ -346,7 +346,7 @@ void calcDesiredTurn(void)
 		turnDirection = straight;
 	else if (headingError < -1)
 	{
-		turnDirection = left; //12345 <- debug point
+		turnDirection = left; 
 	}
 	else if (headingError > 1)
 	{
@@ -361,9 +361,6 @@ void calcDesiredTurn(void)
 
 void moveAndAvoid(void)
 {
-	//sonarDistanceLeft = distInLeft; // dist  of left sensor from cm to in
-	//sonarDistanceRight = distInRight; //dist of right sensor from cm to in
-	//checkBoolSonar();
 	if (sonarDistanceLeft >= SAFE_DISTANCE || sonarDistanceRight >= SAFE_DISTANCE)       // no close objects in front of car
 	{
 		if (turnDirection == straight)
@@ -405,13 +402,13 @@ void moveAndAvoid(void)
 		{
 			turnDirection = left;
 		}
-		/*else
+		else
 		{
 			if (headingError <= 0)
 				turnDirection = left;
 			else
 				turnDirection = right;
-		}*/
+		}
 		turnMotor();  // turn in the new direction
 	}
 
@@ -421,7 +418,7 @@ void moveAndAvoid(void)
 		turnDirection = straight; // straighten up
 		turnMotor();
 
-		Serial.println("\n\nSTOP\n\n");
+		Serial.println("\n\nSTOPPING\n\n");
 
 		while (sonarDistanceLeft < TURN_DISTANCE || sonarDistanceRight < TURN_DISTANCE)       // backup until we get safe clearance
 		{
@@ -452,7 +449,7 @@ void nextWaypoint()
 	{
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
 		turnDirection = straight;
-		analogWrite(PWM_SPEED, NO_SPEED);
+		setSpeed(NO_SPEED);
 		loopForever();
 	}
 
@@ -541,7 +538,7 @@ int freeRam()   // display free memory (SRAM)
 //
 // ****
 
-void turnLeft()
+void turnLeft()  //turn to the left
 {
 	unsigned long start = millis();
 
@@ -555,14 +552,13 @@ void turnLeft()
 		no_right = false;
 		startTime_6 = start;
 	}
-	return;
-
 }
 void turnRight() //turn to the right
 {
-	if (no_right != true) // checks to make sure right direction does not go over 1 in throw
+	if (no_right != true) // linear actuator limiter
 	{
 		unsigned long start = millis();
+
 		analogWrite(PWM_TURN, TRC_MAX);
 
 		if (start - startTime_3 >= turn_speed_total)
@@ -769,7 +765,6 @@ static const char* printStr(const char *str, int len)
 static int getFrontLeftDistance()
 {
 	long duration = 0, distance = 0;
-	boolean error_range = false;
 
 	// Clears the trigPin
 	digitalWrite(trig1_Pin, LOW);
@@ -814,29 +809,45 @@ static int getFrontLeftDistance()
 
 static int getFrontRightDistance()
 {
-	 long duration, distance;
+	long duration, 
+		
+	int distance = 0;
 
 	// Clears the trigPin
 	digitalWrite(trig2_Pin, LOW);
 	delayMicroseconds(2);
 
+	/*
 	// Sets the trigPin on HIGH state for 10 micro seconds
 	digitalWrite(trig2_Pin, HIGH);
 	delayMicroseconds(10);
+	digitalWrite(trig2_Pin, LOW);*/
+
+	digitalWrite(trig2_Pin, HIGH);
+	delayMicroseconds(20);    //Retardo necesario para la inicializacion
 	digitalWrite(trig2_Pin, LOW);
+
+	//  distancia=pulseIn(Pin, HIGH);
+	//  distancia=(int)distancia*0.017;
+
+	while (digitalRead(echo2_Pin) == 0);
+	while (digitalRead(echo2_Pin) == 1) {// && distancia<=500){
+		distance++;
+		delayMicroseconds(58);  // Time it takes the sling to travel 2cm at the speed of sound
+	}
 
 	// Reads the echoPin, returns the sound wave travel time in microseconds
 	// Version 2.0 requires echo pin to be pulled up to VCC. 
 	// A 4.7K  to 10K resistor can be used as pull-up resistor. (Uses 10k)
-	duration = pulseIn(echo2_Pin, HIGH);
+	//duration = pulseIn(echo2_Pin, HIGH);
 
-	if (duration < 1740)
+	/*if (duration < 1740)
 	{
 		duration = 1740;
-	}
+	}*/
 
 	// Calculating the distance (in)
-	distance = (duration * 1.1364) / 74 / 2;
+	//distance = (duration * 1.1364) / 74 / 2;
 
 	if (distance < 177.8)
 	{
@@ -847,7 +858,7 @@ static int getFrontRightDistance()
 		RightWall = true;
 	}
 
-	if (distance <= 600 && distance >= 20)
+	if (distance <= 237 && distance >= 7)
 	{
 		if (distance <= 60 && distance >= 20)
 		{
@@ -873,6 +884,4 @@ static void rc_control(int xAxis, int yAxis)
 	Serial.print(linearActuator);
 	Serial.print(" Value: ");
 	Serial.println(xAxis);	
-
-	smartDelay(500);
 }
