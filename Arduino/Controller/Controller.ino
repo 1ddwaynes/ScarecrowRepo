@@ -7,7 +7,7 @@
 static const uint32_t SERIAL_PORT_BAUD = 115200;
 /////
 
-boolean auto_control = true; //sets to auto_pilot
+boolean auto_control = false; //sets to auto_pilot
 
 /////
 
@@ -36,8 +36,8 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
 #define FAST_SPEED 210 // 55 
-#define NORMAL_SPEED 200 //75
-#define TURN_SPEED 1 //95
+#define NORMAL_SPEED 190 //75
+#define TURN_SPEED 170 //95
 #define SLOW_SPEED 150 //135
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
@@ -208,7 +208,7 @@ void loop() {
 		//updateDisplay();
 	}
 	// no less than 50 ms (as per JSN Ultrasonic sensor specification)
-	smartDelay(100);
+	smartDelay(200);
 }
 
 // ****
@@ -785,7 +785,7 @@ static int getFrontLeftDistance()
 
 	// Sets the trigPin on HIGH state for 10 micro seconds
 	digitalWrite(trig1_Pin, HIGH);
-	delayMicroseconds(10);
+	delayMicroseconds(12);
 	digitalWrite(trig1_Pin, LOW);
 
 	// Reads the echoPin, returns the sound wave travel time in microseconds
@@ -797,7 +797,7 @@ static int getFrontLeftDistance()
 	//Serial.println(duration);
 
 	// Calculating the distance (cm)
-	distance = (int)((duration * 1.1364) / 74 / 2);
+	distance = (int)(duration / 74 / 2);
 
 	if (distance <= 60)
 	{
@@ -816,7 +816,7 @@ static int getFrontLeftDistance()
 		}
 		return distance;
 	}
-	smartDelay(25);
+	smartDelay(50);
 }
 
 static int getFrontRightDistance()
@@ -831,7 +831,7 @@ static int getFrontRightDistance()
 
 	// Sets the trigPin on HIGH state for 10 micro seconds
 	digitalWrite(trig2_Pin, HIGH);
-	delayMicroseconds(10);
+	delayMicroseconds(12);
 	digitalWrite(trig2_Pin, LOW);
 
 	// Reads the echoPin, returns the sound wave travel time in microseconds
@@ -843,7 +843,7 @@ static int getFrontRightDistance()
 	//Serial.println(duration);
 
 	// Calculating the distance (in)
-	distance = (int)((duration * 1.1364) / 74 / 2);
+	distance = (int)(duration / 74 / 2);
 
 	if (distance <= 60)
 	{
@@ -862,7 +862,7 @@ static int getFrontRightDistance()
 		}
 		return distance;
 	}
-	smartDelay(25);
+	smartDelay(50);
 }
 
 static void rc_control(int xAxis, int yAxis)
@@ -874,7 +874,7 @@ static void rc_control(int xAxis, int yAxis)
 	Serial.print(" Value: ");
 	Serial.print(yAxis);
 
-	int linearActuator = map(xAxis, 1950, 1100, 10, 255); // Map the potentiometer value from 0 to 255
+	int linearActuator = map(xAxis, 1950, 1080, 63, 255); // Map the potentiometer value from 0 to 255
 	analogWrite(PWM_TURN, linearActuator); // Send PWM signal to L298N Enable pin
 	Serial.print(" - CH1 :");
 	Serial.print(linearActuator);
