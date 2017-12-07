@@ -56,13 +56,6 @@ namespace GeeseDisturberProject.Camera
             int default_zoom_level = 100;
             web_view.SetInitialScale(default_zoom_level);
 
-            var width = web_view.Width;
-            //var height = web_view.Height;
-
-            //var metrics = Resources.DisplayMetrics;
-            //var width = metrics.WidthPixels;
-            //var height = metrics.HeightPixels;
-
             SetViewSettings(web_view);
 
             web_view.LoadUrl(data + "?width=" + 625 + "&height=" + 245);
