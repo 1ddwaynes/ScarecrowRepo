@@ -5,6 +5,7 @@
 #include <waypointClass.h>     
 
 static const uint32_t SERIAL_PORT_BAUD = 115200;
+
 /////
 
 boolean auto_control = false; //sets to auto_pilot
@@ -35,14 +36,14 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_CM 600                        // Maximum distance we want to ping for (in CENTIMETERS). Maximum sensor distance is rated at 400-500cm.  
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
-#define FAST_SPEED 210 // 55 
-#define NORMAL_SPEED 190 //75
-#define TURN_SPEED 170 //95
-#define SLOW_SPEED 150 //135
+#define FAST_SPEED 55 // 210 
+#define NORMAL_SPEED 75 // 190
+#define TURN_SPEED 95 // 170
+#define SLOW_SPEED 135 //150
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
 int NOW_SPEED = speed;
-#define REVERSE_SPEED 50 //50
+#define REVERSE_SPEED 170 //50
 
 #define TURN_LEFT 1
 #define TURN_RIGHT 2
@@ -338,21 +339,17 @@ void calcDesiredTurn(void)
 
 	// calculate which way to turn to intercept the targetHeading
 	if (abs(headingError) <= HEADING_TOLERANCE)      // if within tolerance, don't turn
-		if (no_interupt == false)
 		turnDirection = straight;
 	else if (headingError < -1)
 	{
-		if (no_interupt == false)
 		turnDirection = left; 
 	}
 	else if (headingError > 1)
 	{
-		if (no_interupt == false)
 		turnDirection = right;
 	}
 	else
 	{
-		if (no_interupt == false)
 		turnDirection = straight;
 	}
 
@@ -375,7 +372,7 @@ void moveAndAvoid()
 		setSpeed(speed);
 	}
 
-	else if ((sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE) && (sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE))    // not yet time to turn, but slow down
+	if ((sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE) || (sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE))    // not yet time to turn, but slow down
 	{
 		if (no_interupt == false)
 		if (turnDirection == straight)
@@ -388,7 +385,7 @@ void moveAndAvoid()
 		setSpeed(speed);
 	}
 
-	else if (sonarDistanceLeft <  TURN_DISTANCE || sonarDistanceRight <  TURN_DISTANCE)  // getting close, time to turn to avoid object        
+	if (sonarDistanceLeft <  TURN_DISTANCE || sonarDistanceRight <  TURN_DISTANCE)  // getting close, time to turn to avoid object        
 	{
 		setSpeed(SLOW_SPEED);
 
@@ -418,11 +415,12 @@ void moveAndAvoid()
 		turnMotor();  // turn in the new direction
 	}
 
-	else if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
+	if (sonarDistanceLeft < STOP_DISTANCE && sonarDistanceRight < STOP_DISTANCE)          // too close, stop and back up
 	{
 		setSpeed(NO_SPEED);
 		turnDirection = straight; // straighten up
 		turnMotor();
+		smartDelay(2000);
 
 		Serial.println("\n\nSTOPPING\n\n");
 

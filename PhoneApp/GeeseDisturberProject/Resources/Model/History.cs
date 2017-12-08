@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using Android.App;
 using Android.Content;
 using Android.OS;
@@ -13,7 +12,7 @@ using SQLite;
 
 namespace GeeseDisturberProject.Model
 {
-    public class History
+   public class History
     {
         [PrimaryKey, AutoIncrement]
 
@@ -23,7 +22,7 @@ namespace GeeseDisturberProject.Model
 
         public string Address { get; set; }
 
-        //public bool Use { get; set; }
+        public bool Use { get; set; }
     }
 
     public class Setting
@@ -66,7 +65,7 @@ namespace GeeseDisturberProject.Model
             {
                 Address_n = "http://proxy7.remote-iot.com:";
 
-                Port_n = "24358";
+                Port_n = "10274";
             }
         }
     }
