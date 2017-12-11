@@ -8,7 +8,7 @@ static const uint32_t SERIAL_PORT_BAUD = 115200;
 
 /////
 
-boolean auto_control = false; //sets to auto_pilot
+boolean auto_control = true; //sets to auto_pilot
 
 /////
 
@@ -36,14 +36,14 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_CM 600                        // Maximum distance we want to ping for (in CENTIMETERS). Maximum sensor distance is rated at 400-500cm.  
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
-#define FAST_SPEED 55 // 210 
-#define NORMAL_SPEED 75 // 190
-#define TURN_SPEED 95 // 170
-#define SLOW_SPEED 135 //150
+#define FAST_SPEED 145 // 210 55
+#define NORMAL_SPEED 140 // 190 75
+#define TURN_SPEED 135 // 170 95
+#define SLOW_SPEED 130 //150 125
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
 int NOW_SPEED = speed;
-#define REVERSE_SPEED 170 //50
+#define REVERSE_SPEED 120 //50 170
 
 #define TURN_LEFT 1
 #define TURN_RIGHT 2
@@ -157,6 +157,9 @@ void setup() {
 	Serial.begin(SERIAL_PORT_BAUD);
 	altSerial.begin(GPS_BAUD);
 
+	if (auto_control == true)
+		GoFoward(500);
+
 	//Serial.write("Debug mode");
 }
 
@@ -253,6 +256,20 @@ static void autoControl()
 	// update display and serial monitor    
 	updateDisplay();
 }
+
+static void GoFoward(unsigned long ms)
+
+{
+	unsigned long start = millis();
+	do
+	{
+		setSpeed(NORMAL_SPEED);
+		turnDirection = straight;
+		turnMotor();
+
+	} while (millis() - start < ms);
+}
+
 
 void processGPS(void)
 {
@@ -436,7 +453,6 @@ void moveAndAvoid()
 
 			// update display and serial monitor    
 			updateDisplay();
-			Serial.println("Reversing");
 			smartDelay(70);
 		}
 		setSpeed(NO_SPEED);  // stop backing up
@@ -545,37 +561,31 @@ int freeRam()   // display free memory (SRAM)
 
 void turnLeft()  //turn to the left
 {
-	if (no_left != true)
+	unsigned long start = millis();
+
+	analogWrite(PWM_TURN, TRC_LEFT);
+
+	if (start - startTime_6 >= TURN_TIME_LIMIT)
 	{
-		unsigned long start = millis();
-
-		analogWrite(PWM_TURN, TRC_LEFT);
-
-		if (start - startTime_6 >= TURN_TIME_LIMIT)
-		{
-			turnDirection = straight;
-			analogWrite(PWM_TURN, TRC_NEUTRAL);
-			no_left = true;
-			startTime_6 = start;
-		}
+		turnDirection = straight;
+		analogWrite(PWM_TURN, TRC_NEUTRAL);
+		no_left = true;
+		startTime_6 = start;
 	}
 }
 
 void turnRight() //turn to the right
 {
-	if (no_right != true) // linear actuator limiter
+	unsigned long start = millis();
+
+	analogWrite(PWM_TURN, TRC_RIGHT);
+
+	if (start - startTime_3 >= TURN_TIME_LIMIT)
 	{
-		unsigned long start = millis();
-
-		analogWrite(PWM_TURN, TRC_RIGHT);
-
-		if (start - startTime_3 >= TURN_TIME_LIMIT)
-		{
-			turnDirection = straight;
-			analogWrite(PWM_TURN, TRC_NEUTRAL);
-			no_right = true;
-			startTime_3 = start;
-		}
+		turnDirection = straight;
+		analogWrite(PWM_TURN, TRC_NEUTRAL);
+		no_right = true;
+		startTime_3 = start;
 	}
 }
 
