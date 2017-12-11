@@ -19,7 +19,7 @@ public class ListViewAdapter
 	}
 
 
-	public ListViewAdapter () throws java.lang.Throwable
+	public ListViewAdapter ()
 	{
 		super ();
 		if (getClass () == ListViewAdapter.class)

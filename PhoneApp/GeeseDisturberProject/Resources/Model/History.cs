@@ -53,9 +53,9 @@ namespace GeeseDisturberProject.Model
 
         public void EditUrl (string port, string Address)
         {
-            this.Port_n = port;
+            Port_n = port;
 
-            this.Address_n = Address;
+            Address_n = Address;
 
             UseNew = true;
         }

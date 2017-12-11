@@ -15,7 +15,7 @@ public class ViewHolder
 	}
 
 
-	public ViewHolder () throws java.lang.Throwable
+	public ViewHolder ()
 	{
 		super ();
 		if (getClass () == ViewHolder.class)

@@ -17,7 +17,7 @@ public class CameraActivity
 	}
 
 
-	public CameraActivity () throws java.lang.Throwable
+	public CameraActivity ()
 	{
 		super ();
 		if (getClass () == CameraActivity.class)

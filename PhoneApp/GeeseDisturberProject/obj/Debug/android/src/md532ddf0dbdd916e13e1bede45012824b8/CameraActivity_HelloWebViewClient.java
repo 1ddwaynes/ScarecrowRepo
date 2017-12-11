@@ -16,7 +16,7 @@ public class CameraActivity_HelloWebViewClient
 	}
 
 
-	public CameraActivity_HelloWebViewClient () throws java.lang.Throwable
+	public CameraActivity_HelloWebViewClient ()
 	{
 		super ();
 		if (getClass () == CameraActivity_HelloWebViewClient.class)
