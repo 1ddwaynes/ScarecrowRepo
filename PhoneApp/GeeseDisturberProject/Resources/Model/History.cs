@@ -50,13 +50,60 @@ namespace GeeseDisturberProject.Model
             }
         }
 
+        public void saveset()
+        {
+            var prefs = Application.Context.GetSharedPreferences("MyApp", FileCreationMode.Private);
+            var prefEditor = prefs.Edit();
+            prefEditor.PutString("Address", Address_n);
+            prefEditor.PutString("Port", Port_n);
+
+            if (UseNew == true)
+            {
+                prefEditor.PutString("UseNew", "true");
+            }
+            else
+            {
+                prefEditor.PutString("UseNew", "false");
+            }
+              
+            prefEditor.Commit();
+        }
+
+        internal void EditUrl(object text1, object text2)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void retrieveset()
+        {
+            //retreive 
+            var prefs = Application.Context.GetSharedPreferences("MyApp", FileCreationMode.Private);
+            Address_n = prefs.GetString("Address", null);
+            Port_n = prefs.GetString("Port", null);
+            var UseNew_n = prefs.GetString("Usenew", null);
+
+            if (UseNew_n == "true")
+                UseNew = true;
+            else
+                UseNew = false;
+
+            //Show a toast
+            //RunOnUiThread(() => Toast.MakeText(this, somePref, ToastLength.Long).Show());
+
+        }
+
         public void EditUrl (string port, string Address)
         {
             this.Port_n = port;
 
-            this.Address_n = Address;
+            if (Address == null)
+                Address_n = "http://proxy7.remote-iot.com:";
+            else
+                this.Address_n = Address;
 
             UseNew = true;
+
+            saveset();
         }
 
         public void InitUrl()
@@ -67,6 +114,7 @@ namespace GeeseDisturberProject.Model
 
                 Port_n = "10274";
             }
+
         }
     }
 }

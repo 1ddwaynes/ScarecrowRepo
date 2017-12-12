@@ -16,7 +16,7 @@ public class ControlPadActivity
 	}
 
 
-	public ControlPadActivity () throws java.lang.Throwable
+	public ControlPadActivity ()
 	{
 		super ();
 		if (getClass () == ControlPadActivity.class)

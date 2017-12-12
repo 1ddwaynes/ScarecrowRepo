@@ -34,10 +34,8 @@ namespace GeeseDisturberProject.Camera
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnPostCreate(savedInstanceState);
-            
-            //string data = "http://proxy7.remote-iot.com:12356/stream";
+      
             string data = settings.GetUrl(false);
-            Console.WriteLine(settings.GetUrl(false));
 
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.CameraActivity);

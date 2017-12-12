@@ -16,7 +16,7 @@ public class NetworkReachability_NetworkStatusChangeBroadcastReceiver
 	}
 
 
-	public NetworkReachability_NetworkStatusChangeBroadcastReceiver () throws java.lang.Throwable
+	public NetworkReachability_NetworkStatusChangeBroadcastReceiver ()
 	{
 		super ();
 		if (getClass () == NetworkReachability_NetworkStatusChangeBroadcastReceiver.class)

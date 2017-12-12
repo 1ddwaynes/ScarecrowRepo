@@ -12,4 +12,8 @@
     <ResultingAbi>armeabi-v7a</ResultingAbi>
     <SdkVersion>21</SdkVersion>
   </Device>
+  <Device id="emulator-5556">
+    <ResultingAbi>armeabi-v7a</ResultingAbi>
+    <SdkVersion>19</SdkVersion>
+  </Device>
 </Devices>
