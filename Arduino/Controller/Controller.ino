@@ -883,6 +883,9 @@ static int getFrontRightDistance()
 	// A 4.7K  to 10K resistor can be used as pull-up resistor. (Uses 10k)
 	duration = pulseIn(echo2_Pin, HIGH);
 	if (duration < 1796)
+	{
+
+	}
 
 
 	//Serial.print(" Duration Right: ");
