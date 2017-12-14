@@ -15,12 +15,10 @@ boolean auto_control = true; //sets to auto_pilot
 static const int TURN_TIME_LIMIT = 1000;
 
 unsigned long startTime_1 = 0, startTime_2 = 0, startTime_3 = 0, startTime_4 = 0, startTime_5 = 0, startTime_sD = 0,
-startTime_6 = 0;
-unsigned long long_interval = 30000, short_interval = 1000;
+startTime_6 = 0, startTime_8 = 0;
+unsigned long long_interval = 30000, short_interval = 3000;
 
 unsigned long start2 = 0, start1 = 0;
-boolean no_right = false, no_left = false; //Limits right turning
-boolean no_interupt = false;
 
 boolean RightWall = false, LeftWall = false; //Is something in front or not
 
@@ -36,14 +34,14 @@ static const int opSens = A3; //Debug Pin
 #define MAX_DISTANCE_CM 600                        // Maximum distance we want to ping for (in CENTIMETERS). Maximum sensor distance is rated at 400-500cm.  
 #define MAX_DISTANCE_IN (MAX_DISTANCE_CM / 2.5)    // same distance, in inches
 
-#define FAST_SPEED 145 // 210 55
-#define NORMAL_SPEED 140 // 190 75
-#define TURN_SPEED 135 // 170 95
-#define SLOW_SPEED 130 //150 125
+#define FAST_SPEED 250 // 210 55
+#define NORMAL_SPEED 250 // 190 75
+#define TURN_SPEED 250 // 170 95
+#define SLOW_SPEED 210 //150 125
 #define NO_SPEED 127
 int speed = NORMAL_SPEED;
 int NOW_SPEED = speed;
-#define REVERSE_SPEED 120 //50 170
+#define REVERSE_SPEED 63 //50 170
 
 #define TURN_LEFT 1
 #define TURN_RIGHT 2
@@ -68,7 +66,7 @@ originalDistanceToTarget;    // distance to original waypoing when we started na
 #define WAYPOINT_DIST_TOLERANE  5   // tolerance in meters to waypoint; once within this tolerance, will advance to the next waypoint
 #define NUMBER_WAYPOINTS 5          // enter the numebr of way points here (will run from 0 to (n-1))
 int waypointNumber = -1;            // current waypoint number; will run from 0 to (NUMBER_WAYPOINTS -1); start at -1 and gets initialized during setup()
-waypointClass waypointList[NUMBER_WAYPOINTS] = { waypointClass(30.508302, -97.832624), waypointClass(30.508085, -97.832494), waypointClass(30.507715, -97.832357), waypointClass(30.508422, -97.832760), waypointClass(30.508518,-97.832665) };
+waypointClass waypointList[NUMBER_WAYPOINTS] = { waypointClass(-88.76362, 41.93402 ), waypointClass(-88.76319, 41.93354), waypointClass(-88.76353, 41.93351 ), waypointClass(-88.7636, 41.93339 )};
 
 
 // Steering/turning 
@@ -78,7 +76,7 @@ directions turnDirection = straight, oldTurnDirection = straight;
 
 // Object avoidance distances (in inches)
 #define SAFE_DISTANCE 90
-#define TURN_DISTANCE 70
+#define TURN_DISTANCE 50
 #define STOP_DISTANCE 40
 //
 // ****
@@ -105,8 +103,8 @@ volatile uint16_t rc_shared[RC_NUM_CHANNELS];
 //
 
 #define TRC_NEUTRAL 127  // neutral speed
-#define TRC_LEFT 192 // turn left
-#define TRC_RIGHT 63 // turn right
+#define TRC_LEFT 240 // turn left
+#define TRC_RIGHT 80 // turn right
 
 static const int PWM_TURN = 9; //PWM signal pin for LinearAcutator (CH3)  Mega - (A12)
 static const int PWM_SPEED = 12; //PWM signal pin for Brushed DC Motor (CH1) Mega - (A13)
@@ -157,8 +155,8 @@ void setup() {
 	Serial.begin(SERIAL_PORT_BAUD);
 	altSerial.begin(GPS_BAUD);
 
-	if (auto_control == true)
-		GoFoward(500);
+	//if (auto_control == true)
+		//moveAndAvoid
 
 	//Serial.write("Debug mode");
 }
@@ -203,7 +201,11 @@ void loop() {
 
 	autoHornController();
 	if (auto_control == true)
-		autoControl();
+	{
+		Serial.println("Honk");
+		//autoControl();
+		moveAndHonk();
+	}
 	
 	else
 	{
@@ -227,6 +229,60 @@ void rc_read_values() {
 	interrupts();
 }
 
+void moveAndHonk()
+{
+
+	autoHornController();
+
+	checkSonar();
+
+	checkWall();
+
+	unsigned long start = millis();
+
+	setSpeed(FAST_SPEED);
+	analogWrite(PWM_TURN, 127);
+	Serial.println("out");
+
+	if (start - startTime_8 >= 12000)
+	{
+		startTime_8 = start;
+		start = millis();
+		while (millis() - start < 1800)
+		{
+			analogWrite(PWM_TURN, 240);
+			Serial.println("in");
+
+			autoHornController();
+
+			checkSonar();
+
+			checkWall();
+		}
+		start = millis();
+		while (millis() - start < 1600)
+		{
+			autoHornController();
+
+			checkSonar();
+
+			checkWall();
+
+			analogWrite(PWM_TURN, 70);
+			Serial.println("straight");
+		}
+	}
+}
+
+void checkWall()
+{
+	if (LeftWall == true || RightWall == true)
+	{
+
+		Serial.println("Wall");
+	}
+}
+
 void calc_input(uint8_t channel, uint8_t input_pin) {
 	if (digitalRead(input_pin) == HIGH) {
 		rc_start[channel] = micros();
@@ -245,9 +301,9 @@ void calc_input(uint8_t channel, uint8_t input_pin) {
 
 static void autoControl()
 {
-	processGPS();
-	currentHeading = readCompass();    // get our current heading
-	calcDesiredTurn();                // calculate how we would optimatally turn, without regard to obstacles      
+	//processGPS();
+	//currentHeading = readCompass();    // get our current heading
+	//calcDesiredTurn();                // calculate how we would optimatally turn, without regard to obstacles      
 
 	// distance in front of us, move, and avoid obstacles as necessary
 	checkSonar();
@@ -378,12 +434,10 @@ void moveAndAvoid()
 	{
 		if (turnDirection == straight)
 		{
-			if( no_interupt == false)
 			speed = FAST_SPEED;	
 		}
 		else
 		{
-			if (no_interupt == false)
 			speed = TURN_SPEED;
 		}
 		setSpeed(speed);
@@ -391,12 +445,10 @@ void moveAndAvoid()
 
 	if ((sonarDistanceLeft > TURN_DISTANCE && sonarDistanceLeft < SAFE_DISTANCE) || (sonarDistanceRight > TURN_DISTANCE && sonarDistanceRight < SAFE_DISTANCE))    // not yet time to turn, but slow down
 	{
-		if (no_interupt == false)
-		if (turnDirection == straight)
+	if (turnDirection == straight)
 			speed = NORMAL_SPEED;
 		else
 		{
-			if (no_interupt == false)
 			speed = TURN_SPEED;
 		}
 		setSpeed(speed);
@@ -408,24 +460,20 @@ void moveAndAvoid()
 
 		if (LeftWall == true && RightWall != true)
 		{
-			if (no_interupt == false)
 			turnDirection = right;
 		}
 		else if (RightWall == true && LeftWall != true)
 		{
-			if (no_interupt == false)
 			turnDirection = left;
 		}
 		else
 		{
 			if (headingError <= 0)
 			{
-				if (no_interupt == false)
 					turnDirection = left;
 			}
 			else
 			{
-				if (no_interupt == false)
 					turnDirection = right;
 			}
 		}
@@ -437,7 +485,7 @@ void moveAndAvoid()
 		setSpeed(NO_SPEED);
 		turnDirection = straight; // straighten up
 		turnMotor();
-		smartDelay(2000);
+		smartDelay(200);
 
 		Serial.println("\n\nSTOPPING\n\n");
 
@@ -569,7 +617,6 @@ void turnLeft()  //turn to the left
 	{
 		turnDirection = straight;
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
-		no_left = true;
 		startTime_6 = start;
 	}
 }
@@ -584,7 +631,6 @@ void turnRight() //turn to the right
 	{
 		turnDirection = straight;
 		analogWrite(PWM_TURN, TRC_NEUTRAL);
-		no_right = true;
 		startTime_3 = start;
 	}
 }
@@ -600,36 +646,29 @@ void turnMotor()
 	{
 		if (oldTurnDirection == left)
 		{
-			no_interupt = false;
 			unsigned long start = millis();
 			analogWrite(PWM_TURN, TRC_RIGHT);
 			
 			if (start - startTime_4 >= TURN_TIME_LIMIT)
 			{		
 				analogWrite(PWM_TURN, TRC_NEUTRAL);
-				no_interupt = false;
-				no_left = false;
 				startTime_4 = start;
 				oldTurnDirection = straight;
 			}
 		}
 		if (oldTurnDirection == right) // if direction was orginally right and going straight
 		{
-			no_interupt = false;
 			unsigned long start = millis();
 			analogWrite(PWM_TURN, TRC_LEFT); 
 
 			if (start - startTime_5 >= TURN_TIME_LIMIT)
 			{
 				analogWrite(PWM_TURN, TRC_NEUTRAL);
-				no_interupt = false;
-				no_right = false;
 				startTime_5 = start;
 				oldTurnDirection = straight;
 			}
 		}
 		else
-			no_interupt = false;
 			oldTurnDirection = straight;
 	}
 
@@ -728,8 +767,6 @@ static void smartDelay(unsigned long ms)
 	{
 		while (altSerial.available())
 			gps.encode(altSerial.read());
-		if (auto_control == true)
-			turnMotor();
 
 	} while (millis() - start < ms);
 }
@@ -784,7 +821,7 @@ static const char* printStr(const char *str, int len)
 
 static int getFrontLeftDistance()
 {
-	long duration = 0;
+	int duration = 0;
 	int distance = 0;
 
 	// Clears the trigPin
@@ -805,9 +842,9 @@ static int getFrontLeftDistance()
 	//Serial.println(duration);
 
 	// Calculating the distance (cm)
-	distance = (int)(duration / 74 / 2);
+	distance = (duration / 74 / 2);
 
-	if (distance <= 60)
+	if (distance <= 30)
 	{
 		LeftWall = true;
 	}
@@ -816,20 +853,19 @@ static int getFrontLeftDistance()
 		LeftWall = false;
 	}
 
-	if (distance >= 8)
+	if (distance >= 19)
 	{
-		if (distance <= 60 && distance >= 8)
+		if (distance <= 60)
 		{
 			hornController();
 		}
 		return distance;
 	}
-	smartDelay(50);
 }
 
 static int getFrontRightDistance()
 {
-	long duration = 0;
+	int duration = 0;
 		
 	int distance = 0;
 
@@ -846,14 +882,16 @@ static int getFrontRightDistance()
 	// Version 2.0 requires echo pin to be pulled up to VCC. 
 	// A 4.7K  to 10K resistor can be used as pull-up resistor. (Uses 10k)
 	duration = pulseIn(echo2_Pin, HIGH);
+	if (duration < 1796)
+
 
 	//Serial.print(" Duration Right: ");
 	//Serial.println(duration);
 
 	// Calculating the distance (in)
-	distance = (int)(duration / 74 / 2);
+	distance = (duration / 74 / 2);
 
-	if (distance <= 60)
+	if (distance <= 30)
 	{
 		RightWall = true;
 	}
@@ -862,15 +900,14 @@ static int getFrontRightDistance()
 		RightWall = false;
 	}
 
-	if (distance > 7)
+	if (distance > 19)
 	{
-		if (distance <= 60 && distance >= 8)
+		if (distance <= 60)
 		{
 			hornController();
 		}
 		return distance;
 	}
-	smartDelay(50);
 }
 
 static void rc_control(int xAxis, int yAxis)
